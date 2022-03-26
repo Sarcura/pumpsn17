@@ -4,7 +4,18 @@
 
 from dis import disco
 import logging
-from pyserial_connection_arduino import connect_arduino, disconnect_arduino, send_to_arduino, list_available_ports
+from pyserial_connection_arduino import Arduino
+from pySerialTransfer import pySerialTransfer as txfer
+
+    # teensy1 = Arduino(comport)
+    # teensy1.connect()
+    # # import time
+    # # time.sleep(1)
+    # # print(teensy1)
+    # teensy1.send_to_arduino(data_list)
+    # # print(teensy1)
+    # teensy1.disconnect()
+
 import numpy as np
 try:
     import dearpygui.dearpygui as dpg
@@ -12,18 +23,18 @@ except:
     print("dearpygui not installed")
 # for saving variables
 comport = '/dev/ttyACM0'
-motor0_enable = 0
+motor0_enable = 1
 motor0_direction = 0
-motor0_position = 0
-motor1_enable = 0
+motor0_speed = 1000
+motor1_enable = 1
 motor1_direction = 0
-motor1_position = 0
-motor2_enable = 0
+motor1_speed = 1000
+motor2_enable = 1
 motor2_direction = 0
-motor2_position = 0
+motor2_speed = 1000
 motor3_enable = 1
 motor3_direction = 0
-motor3_position = 0
+motor3_speed = 1000
 
 dpg.create_context()
 dpg.create_viewport()
@@ -57,26 +68,29 @@ def send_motor_values(sender, callback):
     print(f"Values in the list: {value_list_to_send}")
 
     # this should be generative code instead
-    motor0_position = value_list_to_send[0]
-    motor1_position = value_list_to_send[1]
-    motor2_position = value_list_to_send[2]
-    motor3_position = value_list_to_send[3]
+    # motor0_position = value_list_to_send[0]
+    # motor1_position = value_list_to_send[1]
+    # motor2_position = value_list_to_send[2]
+    # motor3_position = value_list_to_send[3]
 
     # comport = dpg.get_value("comport##inputtext")
     # comport = dpg.get_value()
     comport = "COM9"
-    link = connect_arduino(comport)
-    results = np.array(send_to_arduino(link,motor0_enable,motor0_direction,motor0_position,
-        motor1_enable,motor1_direction,motor1_position,motor2_enable,motor2_direction,motor2_position,motor3_enable,motor3_direction,motor3_position))
-    print(f"Received values: {results}")
-    # take ony every thrid value, those are the motor values
-    motorvalues = (results[2],results[5],results[8],results[11])
-    print(motorvalues)
-    nr_of_motor = 0
-    for rcvd_value in motorvalues:
-        print(rcvd_value)
-        dpg.set_value(f"received value motor {nr_of_motor}", rcvd_value)
-        nr_of_motor += 1
+    data_list = [motor0_enable, motor0_direction, motor0_speed, motor1_enable, motor1_direction,  motor1_speed,
+        motor2_enable, motor2_direction, motor2_speed, motor3_enable, motor3_direction, motor3_speed]
+    teensy1 = Arduino(comport)
+    teensy1.send_to_arduino(data_list)
+    # results = np.array(send_to_arduino(link,motor0_enable,motor0_direction,motor0_position,
+    #     motor1_enable,motor1_direction,motor1_position,motor2_enable,motor2_direction,motor2_position,motor3_enable,motor3_direction,motor3_position))
+
+    # # take ony every third value, those are the motor values
+    # motorvalues = (results[2],results[5],results[8],results[11])
+    # print(motorvalues)
+    # nr_of_motor = 0
+    # for rcvd_value in motorvalues:
+    #     print(rcvd_value)
+    #     dpg.set_value(f"received value motor {nr_of_motor}", rcvd_value)
+    #     nr_of_motor += 1
 
 # def adjust_comport(sender, callback):
 #     print(dpg.get_value("comport##inputtext"))
@@ -90,7 +104,8 @@ def connect_usb(sender, app_data, user_data):
     print(f"app_data is: {app_data}")
     print(f"user_data is: {user_data}")
     if user_data:
-        link = connect_arduino(sender)
+        user_data.disconnect() #user_data is an Arduino object
+        user_data = False
         dpg.set_item_user_data(sender, False)
         # dpg.set_value(item=sender, value=f"Disconnect {sender}")
         dpg.configure_item(item=sender, label=f"Disconnect {sender}")
@@ -99,17 +114,19 @@ def connect_usb(sender, app_data, user_data):
         # print(dpg.is_item_deactivated(sender))
     else:
         try:
-            disconnect_arduino(link)
+            user_data = Arduino(sender) # sender is the comport
+            user_data.connect() #user_data is now an Arduino object
         except:
-            print("nothing to disconnect")
-        dpg.set_item_user_data(sender, True)
-        # dpg.set_value(item=sender, value=f"Disconnect {sender}")
-        # dpg.configure_item(item=sender, enabled=True, label=f"Connect {sender}")
-        dpg.configure_item(item=sender, label=f"Connect {sender}")
+            print("Nothing to disconnect")
+            user_data = False
+    dpg.set_item_user_data(sender, user_data) # set the user data from sender to Arduino object
+    # dpg.set_value(item=sender, value=f"Disconnect {sender}")
+    # dpg.configure_item(item=sender, enabled=True, label=f"Connect {sender}")
+    dpg.configure_item(item=sender, label=f"Connect {sender}")
 
 def find_comports(sender, callback):
     #print(list_available_ports())
-    comport_list = list_available_ports()
+    comport_list = txfer.open_ports()
     for element in comport_list:
         print(element)
         # dpg.add_button(label=f"{element}", after="search_button", parent="motor_window", tag=f"new_button{element}")
