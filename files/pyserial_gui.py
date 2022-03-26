@@ -1,20 +1,11 @@
 # pip install pySerial
 # pip install pySerialTransfer
-# pip install dearpygui
+# pip install dearpygui>=1.4
 
 from dis import disco
 import logging
 from pyserial_connection_arduino import Arduino
 from pySerialTransfer import pySerialTransfer as txfer
-
-    # teensy1 = Arduino(comport)
-    # teensy1.connect()
-    # # import time
-    # # time.sleep(1)
-    # # print(teensy1)
-    # teensy1.send_to_arduino(data_list)
-    # # print(teensy1)
-    # teensy1.disconnect()
 
 import numpy as np
 try:
@@ -46,13 +37,13 @@ def send_motor_values(sender, callback):
     comport = "COM9"
     data_list = [motor0_enable, motor0_direction, dpg.get_value(item=slider_4int)[0], motor1_enable, motor1_direction, dpg.get_value(item=slider_4int)[1],
         motor2_enable, motor2_direction, dpg.get_value(item=slider_4int)[2], motor3_enable, motor3_direction, dpg.get_value(item=slider_4int)[3]]
-    teensy1 = Arduino(comport)
-    teensy1.connect()
 
-
-    
-    teensy1.send_to_arduino(data_list)
-    teensy1.disconnect()
+    teensy1 = dpg.get_item_user_data("search_button")
+    print(teensy1)
+    if teensy1:
+        teensy1.send_to_arduino(data_list)
+    else:
+        print("No open Arduino connection.")
 
 def connect_usb(sender, app_data, user_data):
     print(f"sender is: {sender}")
@@ -72,11 +63,9 @@ def connect_usb(sender, app_data, user_data):
         dpg.set_item_user_data(sender, False)
         # dpg.set_value(item=sender, value=f"Disconnect {sender}")
         dpg.configure_item(item=sender, label=f"Disconnect {sender}")
-        # print(dpg.is_item_hovered(sender))
-        # print(dpg.is_item_activated(sender))
-        # print(dpg.is_item_deactivated(sender))
 
-    dpg.set_item_user_data(sender, user_data) # set the user data from sender to Arduino object
+    # dpg.set_item_user_data(sender, user_data) # set the user data from sender (COMx button!) to Arduino object
+    dpg.set_item_user_data("search_button", user_data) # set the user_data from sender (COMx button!) to connected Arduino object
     # dpg.set_value(item=sender, value=f"Disconnect {sender}")
     # dpg.configure_item(item=sender, enabled=True, label=f"Connect {sender}")
     dpg.configure_item(item=sender, label=f"Connect {sender}")
@@ -88,11 +77,6 @@ def find_comports(sender, callback):
         print(element)
         # dpg.add_button(label=f"{element}", after="search_button", parent="motor_window", tag=f"new_button{element}")
         dpg.add_button(label=f"Connect to {element}", before="search_button", parent="motor_window", tag=element, callback=connect_usb, user_data=False)
-        dpg.add_radio_button(label=f"Connect too {element}", before="search_button", parent="motor_window", tag=f"toggle{element}", callback=connect_usb, user_data=False)
-    # dpg.set_value(item="Click button for new search", value=comport_list)
-    # this takes the first found comport and puts it into the comport to connect
-    # on Raspberry, this *should* enable a quick connection
-    # dpg.set_value(item="comport##inputtext", value=comport_list[0])
 
 with dpg.window(label="Motor Window", tag="motor_window"):
 
