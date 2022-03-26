@@ -5,16 +5,16 @@ const int ledPin = 13;
 SerialTransfer myTransfer;
 
 struct STRUCT {
-  float motor0_enable
+  float motor0_enable;
   float motor0_direction;
   float motor0_speed;
-  float motor1_enable
+  float motor1_enable;
   float motor1_direction;
   float motor1_speed;
-  float motor2_enable
+  float motor2_enable;
   float motor2_direction;
   float motor2_speed;
-  float motor3_enable
+  float motor3_enable;
   float motor3_direction;
   float motor3_speed;
 } testStruct;

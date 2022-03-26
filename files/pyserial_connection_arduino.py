@@ -5,16 +5,37 @@ from pySerialTransfer import pySerialTransfer as txfer
 # connection will not work with pySerialTransfer==2.0
 # requirement: pip install pyserial (works with 3.4 and most likely newer but not much older versions)
 # on teensy: include "SerialTransfer.h" Version 2.0
-    
-def connect_to_arduino(comport,motor0_enable,motor0_direction,motor0_speed,
-        motor1_enable,motor1_direction,motor1_speed,motor2_enable,motor2_direction,motor2_speed,motor3_enable,motor3_direction,motor3_speed):
+# connecting multiple arduinos is not implemented
+
+def list_available_ports():
+    ports = txfer.open_ports()
+    print("Available ports:")
+    print(ports)
+    return ports
+
+def connect_arduino(comport):
     try:
         print(f"Connecting to {comport}")
         link = txfer.SerialTransfer(comport)
         
         link.open()
-        time.sleep(1) # allow some time for the Arduino to completely reset
+        return link
+        # time.sleep(1) # allow some time for the Arduino to completely reset
+    except:
+        import traceback
+        traceback.print_exc()
+        link.close()
+
+def disconnect_arduino(link):
+    try:
+        link.close()
+    except:
+        import traceback
+        traceback.print_exc()
         
+def send_to_arduino(link,motor0_enable,motor0_direction,motor0_speed,
+        motor1_enable,motor1_direction,motor1_speed,motor2_enable,motor2_direction,motor2_speed,motor3_enable,motor3_direction,motor3_speed):
+    try:
         # reset send_size
         send_size = 0
         
@@ -47,26 +68,20 @@ def connect_to_arduino(comport,motor0_enable,motor0_direction,motor0_speed,
         print(f'SENT: {list_}')
         print(f'RCVD: {rec_list_}')
 
-        link.close()
         return rec_list_
 
-    except KeyboardInterrupt:
-        link.close()
+    # except KeyboardInterrupt:
+    #     link.close()
 
     except:
         import traceback
         traceback.print_exc()
         link.close()
 
-def list_available_ports():
-    ports = txfer.open_ports()
-    print("Available ports:")
-    print(ports)
-    return ports
 
 if __name__ == "__main__":
     # list_available_ports()
-    comport = 'COM17'
+    comport = 'COM9'
     motor0_enable = 1
     motor0_direction = 0
     motor0_speed = 1000
@@ -79,6 +94,8 @@ if __name__ == "__main__":
     motor3_enable = 1
     motor3_direction = 0
     motor3_speed = 1000
-    results = np.array(connect_to_arduino(comport,motor0_enable,motor0_direction,motor0_speed,
+
+    link = connect_arduino(comport)
+    results = np.array(send_to_arduino(link,motor0_enable,motor0_direction,motor0_speed,
         motor1_enable,motor1_direction,motor1_speed,motor2_enable,motor2_direction,motor2_speed,motor3_enable,motor3_direction,motor3_speed))
     print(results)
