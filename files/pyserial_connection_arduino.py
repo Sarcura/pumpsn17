@@ -98,4 +98,5 @@ if __name__ == "__main__":
     link = connect_arduino(comport)
     results = np.array(send_to_arduino(link,motor0_enable,motor0_direction,motor0_speed,
         motor1_enable,motor1_direction,motor1_speed,motor2_enable,motor2_direction,motor2_speed,motor3_enable,motor3_direction,motor3_speed))
+    disconnect_arduino(link)
     print(results)

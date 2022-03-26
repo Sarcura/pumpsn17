@@ -2,6 +2,7 @@
 # pip install pySerialTransfer
 # pip install dearpygui
 
+from dis import disco
 import logging
 from pyserial_connection_arduino import connect_arduino, disconnect_arduino, send_to_arduino, list_available_ports
 import numpy as np
@@ -29,10 +30,9 @@ dpg.create_viewport()
 dpg.setup_dearpygui()
 
 # callback
-def retrieve_log(sender, callback):
-    dpg.show_logger()
-    for element in motor_count:
-        dpg.log_info(dpg.get_value(f"motor {element}##inputtext"))
+# def retrieve_log(sender, callback):
+#     dpg.show_logger()
+
 
     # log_info(get_value("comport##inputtext")
 
@@ -90,6 +90,7 @@ def connect_usb(sender, app_data, user_data):
     print(f"app_data is: {app_data}")
     print(f"user_data is: {user_data}")
     if user_data:
+        link = connect_arduino(sender)
         dpg.set_item_user_data(sender, False)
         # dpg.set_value(item=sender, value=f"Disconnect {sender}")
         dpg.configure_item(item=sender, label=f"Disconnect {sender}")
@@ -97,6 +98,10 @@ def connect_usb(sender, app_data, user_data):
         # print(dpg.is_item_activated(sender))
         # print(dpg.is_item_deactivated(sender))
     else:
+        try:
+            disconnect_arduino(link)
+        except:
+            print("nothing to disconnect")
         dpg.set_item_user_data(sender, True)
         # dpg.set_value(item=sender, value=f"Disconnect {sender}")
         # dpg.configure_item(item=sender, enabled=True, label=f"Connect {sender}")
@@ -138,7 +143,7 @@ with dpg.window(label="Motor Window", tag="motor_window"):
         # dpg.set_value(item=element, value="No values where received yet")
     
     dpg.add_button(label="Go to numerically define positions", callback=send_motor_values)
-    dpg.add_button(label="print-log", callback=retrieve_log)
+    # dpg.add_button(label="print-log", callback=retrieve_log)
 
     # set main window & size
     # dpg.set_main_window_size(800, 550)
