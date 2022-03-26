@@ -54,14 +54,27 @@ def send_motor_values(sender, callback):
 
     # this should be generative code instead
     # nr_of_motors = 4
+
+    # motor_count = [0,1,2,3]
+    print(motor_count)
+    # for element in motor_count:
+    #     dpg.add_input_text(label=f"motor {element}##inputtext")
+
     value_list_to_send = []
     for element in motor_count:
+        print(element)
         try:
             print(f"Printing value of motor {element}")
-            print(dpg.get_value(f"motor {element}##inputtext"))
-            # set comport to first found comport
-            print(dpg.get_value(f"motor {0}##inputtext"))
-            value_list_to_send.append(int(dpg.get_value(f"motor {element}##inputtext")))
+            dpg.get_item_user_data(f"motor {element}")
+            print(dpg.get_item_user_data(f"motor {element}"))
+
+            # print(dpg.get_value(f"motor {element}##inputtext"))
+            # # set comport to first found comport
+            # print(dpg.get_value(f"motor {0}##inputtext"))
+
+            dpg.get_item_user_data(sender)
+
+            value_list_to_send.append(int(dpg.get_item_user_data(f"motor {element}")))
         except ValueError:
             value_list_to_send.append(0)
 
@@ -103,6 +116,7 @@ def connect_usb(sender, app_data, user_data):
     print(f"sender is: {sender}")
     print(f"app_data is: {app_data}")
     print(f"user_data is: {user_data}")
+
     if user_data:
         user_data.disconnect() #user_data is an Arduino object
         user_data = False
@@ -153,10 +167,10 @@ with dpg.window(label="Motor Window", tag="motor_window"):
     dpg.add_text("Please choose position for any/all motors:")
     motor_count = [0,1,2,3]
     for element in motor_count:
-        dpg.add_input_text(label=f"motor {element}##inputtext")
+        dpg.add_input_text(label=f"motor {element}##inputtext", tag=f"motor {element}")
         # dpg.add_input_text(f"motor {element}##inputtext", hint="enter position in ticks, 6400 ticks are 360°", decimal=True)
         # dpg.add_label_text(label=f"received value motor {element}")
-        print(f"element name {element}")
+        print(f"element name: {element}")
         # dpg.set_value(item=element, value="No values where received yet")
     
     dpg.add_button(label="Go to numerically define positions", callback=send_motor_values)
