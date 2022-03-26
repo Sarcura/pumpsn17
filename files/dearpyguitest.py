@@ -10,17 +10,25 @@ with dpg.window(label="Tutorial") as window:
 
     button1 = dpg.add_button(label="Press Me!")
 
-    slider_int = dpg.add_slider_int(label="Slide to the left!", width=100)
-    slider_float = dpg.add_slider_float(label="Slide to the right!", width=100)
+    slider_int = dpg.add_slider_int(label="Slide to the left!", tag="slider1", max_value=10000, width=100)
+    slider_4int = dpg.add_slider_intx(label="Slide to the right!", max_value=10000, width=500)
 
     # An item's unique identifier (tag) is returned when
     # creating items.
-    print(f"Printing item tag's: {window}, {button1}, {slider_int}, {slider_float}")
+    print(f"Printing item tag's: {window}, {button1}, {slider_int}, {slider_4int}")
 
 # If you want to add an item to an existing container, you
 # can specify it by passing the container's tag as the
 # "parent" parameter.
-button2 = dpg.add_button(label="Don't forget me!", parent=window)
+def buttonpress2(sender, app_data, user_data):
+    print(f"sender is: {sender}")
+    print(f"app_data is: {app_data}")
+    print(f"user_data is: {user_data}")
+    print(dpg.get_item_user_data(item=slider_4int))
+    print(dpg.get_item_callback(item=slider_4int))
+    print(dpg.get_value(item=slider_4int))
+
+button2 = dpg.add_button(label="Don't forget me!", parent=window, callback=buttonpress2)
 
 dpg.create_viewport(title='Custom Title', width=600, height=200)
 dpg.setup_dearpygui()

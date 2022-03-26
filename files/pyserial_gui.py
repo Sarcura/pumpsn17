@@ -37,87 +37,36 @@ motor3_direction = 0
 motor3_speed = 1000
 
 dpg.create_context()
-dpg.create_viewport()
+dpg.create_viewport(title='PytonPyserialPumps', width=700, height=400)
 dpg.setup_dearpygui()
 
-# callback
-# def retrieve_log(sender, callback):
-#     dpg.show_logger()
-
-
-    # log_info(get_value("comport##inputtext")
-
-# list all available exceptions
-# print(dir(locals()['__builtins__']))
-
 def send_motor_values(sender, callback):
+    print(f"Values in the list: {dpg.get_value(item=slider_4int)}")
 
-    # this should be generative code instead
-    # nr_of_motors = 4
-
-    # motor_count = [0,1,2,3]
-    print(motor_count)
-    # for element in motor_count:
-    #     dpg.add_input_text(label=f"motor {element}##inputtext")
-
-    value_list_to_send = []
-    for element in motor_count:
-        print(element)
-        try:
-            print(f"Printing value of motor {element}")
-            dpg.get_item_user_data(f"motor {element}")
-            print(dpg.get_item_user_data(f"motor {element}"))
-
-            # print(dpg.get_value(f"motor {element}##inputtext"))
-            # # set comport to first found comport
-            # print(dpg.get_value(f"motor {0}##inputtext"))
-
-            dpg.get_item_user_data(sender)
-
-            value_list_to_send.append(int(dpg.get_item_user_data(f"motor {element}")))
-        except ValueError:
-            value_list_to_send.append(0)
-
-    print(f"Values in the list: {value_list_to_send}")
-
-    # this should be generative code instead
-    # motor0_position = value_list_to_send[0]
-    # motor1_position = value_list_to_send[1]
-    # motor2_position = value_list_to_send[2]
-    # motor3_position = value_list_to_send[3]
-
-    # comport = dpg.get_value("comport##inputtext")
-    # comport = dpg.get_value()
     comport = "COM9"
-    data_list = [motor0_enable, motor0_direction, motor0_speed, motor1_enable, motor1_direction,  motor1_speed,
-        motor2_enable, motor2_direction, motor2_speed, motor3_enable, motor3_direction, motor3_speed]
+    data_list = [motor0_enable, motor0_direction, dpg.get_value(item=slider_4int)[0], motor1_enable, motor1_direction, dpg.get_value(item=slider_4int)[1],
+        motor2_enable, motor2_direction, dpg.get_value(item=slider_4int)[2], motor3_enable, motor3_direction, dpg.get_value(item=slider_4int)[3]]
     teensy1 = Arduino(comport)
+    teensy1.connect()
+
+
+    
     teensy1.send_to_arduino(data_list)
-    # results = np.array(send_to_arduino(link,motor0_enable,motor0_direction,motor0_position,
-    #     motor1_enable,motor1_direction,motor1_position,motor2_enable,motor2_direction,motor2_position,motor3_enable,motor3_direction,motor3_position))
+    teensy1.disconnect()
 
-    # # take ony every third value, those are the motor values
-    # motorvalues = (results[2],results[5],results[8],results[11])
-    # print(motorvalues)
-    # nr_of_motor = 0
-    # for rcvd_value in motorvalues:
-    #     print(rcvd_value)
-    #     dpg.set_value(f"received value motor {nr_of_motor}", rcvd_value)
-    #     nr_of_motor += 1
-
-# def adjust_comport(sender, callback):
-#     print(dpg.get_value("comport##inputtext"))
-    # for some reason, this does not work:
-    # comport = get_value("comport##inputtext")
-
-# def connect_usb():
-#     print(element)
 def connect_usb(sender, app_data, user_data):
     print(f"sender is: {sender}")
     print(f"app_data is: {app_data}")
     print(f"user_data is: {user_data}")
 
-    if user_data:
+    if not user_data:
+        try:
+            user_data = Arduino(sender) # sender is the comport
+            user_data.connect() #user_data is now an Arduino object
+        except:
+            print("Nothing to disconnect")
+            user_data = False
+    else:
         user_data.disconnect() #user_data is an Arduino object
         user_data = False
         dpg.set_item_user_data(sender, False)
@@ -126,13 +75,7 @@ def connect_usb(sender, app_data, user_data):
         # print(dpg.is_item_hovered(sender))
         # print(dpg.is_item_activated(sender))
         # print(dpg.is_item_deactivated(sender))
-    else:
-        try:
-            user_data = Arduino(sender) # sender is the comport
-            user_data.connect() #user_data is now an Arduino object
-        except:
-            print("Nothing to disconnect")
-            user_data = False
+
     dpg.set_item_user_data(sender, user_data) # set the user data from sender to Arduino object
     # dpg.set_value(item=sender, value=f"Disconnect {sender}")
     # dpg.configure_item(item=sender, enabled=True, label=f"Connect {sender}")
@@ -165,15 +108,9 @@ with dpg.window(label="Motor Window", tag="motor_window"):
     # text input fields for all motors are created
     # for each value there is a button to send the entered value to the motor
     dpg.add_text("Please choose position for any/all motors:")
-    motor_count = [0,1,2,3]
-    for element in motor_count:
-        dpg.add_input_text(label=f"motor {element}##inputtext", tag=f"motor {element}")
-        # dpg.add_input_text(f"motor {element}##inputtext", hint="enter position in ticks, 6400 ticks are 360°", decimal=True)
-        # dpg.add_label_text(label=f"received value motor {element}")
-        print(f"element name: {element}")
-        # dpg.set_value(item=element, value="No values where received yet")
+    slider_4int = dpg.add_slider_intx(label="Motor 0,1,2,3", max_value=10000, width=500)
     
-    dpg.add_button(label="Go to numerically define positions", callback=send_motor_values)
+    dpg.add_button(label="Send to Arduino", callback=send_motor_values)
     # dpg.add_button(label="print-log", callback=retrieve_log)
 
     # set main window & size
