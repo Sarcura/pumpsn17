@@ -7,20 +7,45 @@ from pySerialTransfer import pySerialTransfer as txfer
 # requirement: pip install pyserial (works with 3.4 and most likely newer but not much older versions)
 # on teensy: include "SerialTransfer.h" Version 2.0
 # connecting multiple arduinos is not implemented
-
+import serial.tools.list_ports
 class Arduino:
-    def __init__(self, port):
-        self.port = port
+    def __init__(self, findusbport_hwid=None, port=None):
+        self.hwid = findusbport_hwid
+        if findusbport_hwid and not port:
+            print(f"No port specified, looking for devides with hwid {findusbport_hwid}")
+            self.findusbport()
+        else: # means, even if both are set
+            self.port = port
         self.link = False
         self.data_list = False
         self.rec_data_list = False
         self.age = False
+        self.comport_list = False
+        self.found_multiple_devices = False
 
     def __str__(self):
         if self.link:
             return f"Connection on port {self.port} opened at {self.age} "
         else:
             return f"No connection on port {self.port} currently opened. ({datetime.datetime.now()})"
+
+    def findusbport(self):
+        if self.hwid:
+            self.hwid = "(?i)" + self.hwid  # forces case insensitive
+            comport_list = []
+            if len(comport_list) == 0:
+                comport_list = []
+                for port in serial.tools.list_ports.grep(self.hwid):
+                    comport_list.append(port[0])
+            self.comport_list = comport_list
+            if len(self.comport_list) == 1:
+                print(f"Warning, multiple devies with the same hwid found. Access by comport_list.")
+                print(f"First device of the list will be used for connection: {self.comport_list}")
+                self.found_multiple_devices = True # all found devices are stored for later access
+            self.port = comport_list[0] # only takes the first device with the queried hardware id
+        else:
+            print("No hwid specified, search aborted.")
+
     def connect(self):
         try:
             print(f"Connecting to {self.port}")
@@ -35,6 +60,7 @@ class Arduino:
 
     def disconnect(self):
         try:
+            print(f"Disconnecting {self.port}")
             self.link.close()
             self.link = False
         except:
@@ -103,7 +129,9 @@ if __name__ == "__main__":
     data_list = [motor0_enable, motor0_direction, motor0_speed, motor1_enable, motor1_direction,  motor1_speed,
         motor2_enable, motor2_direction, motor2_speed, motor3_enable, motor3_direction, motor3_speed]
 
-    teensy1 = Arduino(comport)
+    teensy1 = Arduino(findusbport_hwid="16C0:0483")
+
+    teensy1 = Arduino(port="COM9")
     teensy1.connect()
     # import time
     # time.sleep(1)
@@ -111,100 +139,16 @@ if __name__ == "__main__":
     teensy1.send_to_arduino(data_list)
     # print(teensy1)
     teensy1.disconnect()
-    # print(teensy1.link) # this is false is no link exists
+    # print(teensy1.link) # this is false if no link exists
     # print(teensy1)
     # print(teensy1.data_list)
     # print(teensy1.rec_data_list)
 
-# def data_listavailable_ports():
-#     ports = txfer.open_ports()
-#     print("Available ports:")
-#     print(ports)
-#     return ports
-
-# def connect_arduino(comport):
-#     try:
-#         print(f"Connecting to {comport}")
-#         link = txfer.SerialTransfer(comport)
-        
-#         link.open()
-#         return link
-#         # time.sleep(1) # allow some time for the Arduino to completely reset
-#     except:
-#         import traceback
-#         traceback.print_exc()
-#         link.close()
-
-# def disconnect_arduino(link):
-#     try:
-#         link.close()
-#     except:
-#         import traceback
-#         traceback.print_exc()
-        
-# def send_to_arduino(link,motor0_enable,motor0_direction,motor0_speed,
-#         motor1_enable,motor1_direction,motor1_speed,motor2_enable,motor2_direction,motor2_speed,motor3_enable,motor3_direction,motor3_speed):
-#     try:
-#         # reset send_size
-#         send_size = 0
-        
-#         # Send a list
-#         data_list = [motor0_enable, motor0_direction, motor0_speed, motor1_enable, motor1_direction,  motor1_speed,
-#             motor2_enable, motor2_direction, motor2_speed, motor3_enable, motor3_direction, motor3_speed]
-#         data_listsize = link.tx_obj(data_list)
-#         send_size += data_listsize
-        
-#         # Transmit all the data to send in a single packet
-#         link.send(send_size)
-#         print("Message sent...")
-        
-#         # Wait for a response and report any errors while receiving packets
-#         while not link.available():
-#             if link.status < 0:
-#                 if link.status == -1:
-#                     print('ERROR: CRC_ERROR')
-#                 elif link.status == -2:
-#                     print('ERROR: PAYLOAD_ERROR')
-#                 elif link.status == -3:
-#                     print('ERROR: STOP_BYTE_ERROR')
-
-#         # Parse response list
-#         ###################################################################
-#         rec_data_list  = link.rx_obj(obj_type=type(data_list),
-#                                     obj_byte_size=data_listsize,
-#                                     data_listformat='i')
- 
-#         print(f'SENT: {data_list}')
-#         print(f'RCVD: {rec_data_list}')
-
-#         return rec_data_list
-
-#     # except KeyboardInterrupt:
-#     #     link.close()
-
-#     except:
-#         import traceback
-#         traceback.print_exc()
-#         link.close()
-
-# if __name__ == "__main__":
-#     # data_listavailable_ports()
-#     comport = 'COM9'
-#     motor0_enable = 1
-#     motor0_direction = 0
-#     motor0_speed = 1000
-#     motor1_enable = 1
-#     motor1_direction = 0
-#     motor1_speed = 1000
-#     motor2_enable = 1
-#     motor2_direction = 0
-#     motor2_speed = 1000
-#     motor3_enable = 1
-#     motor3_direction = 0
-#     motor3_speed = 1000
-
-#     link = connect_arduino(comport)
-#     results = np.array(send_to_arduino(link,motor0_enable,motor0_direction,motor0_speed,
-#         motor1_enable,motor1_direction,motor1_speed,motor2_enable,motor2_direction,motor2_speed,motor3_enable,motor3_direction,motor3_speed))
-#     disconnect_arduino(link)
-#     print(results)
+# def findusbport_hwid(hardwareID="16C0:0483")-> str:
+#     hardwareID = "(?i)" + hardwareID  # forces case insensitive
+#     comport_list = []
+#     if len(comport_list) == 0:
+#         comport_list = []
+#         for port in serial.tools.list_ports.grep(hardwareID):
+#             comport_list.append(port[0])
+#     return comport_list
