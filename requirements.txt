@@ -1,3 +1,4 @@
-serial
+pyserial
+pySerialTransfer
 numpy
 dearpygui

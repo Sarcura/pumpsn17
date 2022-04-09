@@ -8,10 +8,7 @@ from pyserial_connection_arduino import Arduino
 # from pySerialTransfer import pySerialTransfer as txfer
 import serial.tools.list_ports
 import numpy as np
-try:
-    import dearpygui.dearpygui as dpg
-except:
-    print("dearpygui not installed")
+import dearpygui.dearpygui as dpg
 # for saving variables
 comport = '/dev/ttyACM0'
 motor0_enable = 1

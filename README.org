@@ -533,3 +533,6 @@ Screenshot of the program.
   
 
 
+To create an executable, use
+"pyinstaller --python-option 3.9 .\pyserial_gui.spec --onefile --icon=sarcura.ico
+or use pip installed auto-py-to-exe and creat it via GUI
