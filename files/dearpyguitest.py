@@ -1,35 +1,4 @@
-import serial
-import serial.tools.list_ports
-port_list = list(serial.tools.list_ports.comports())
-print(port_list[0].pid) # 1155 for Teensy
-print(port_list[0].vid) # 5824 for Teensy
-print(port_list[0].hwid)
-print(port_list[0].device)
-# print(port_list.device)
-for thingy in port_list:
-    print(thingy.device)
-print(port_list[0].location)
-print(port_list[0].manufacturer)
-print(port_list[0].product)
-print(port_list[0].description)
-print(port_list[0].interface)
-print(port_list[0].name)
-print(port_list[0].serial_number)
-print(port_list[0].__dict__)
-print(port_list[1])
-print(port_list[2])
 
-def find_teensys(hardwareID="16C0:0483"):
-    hardwareID = "(?i)" + hardwareID  # forces case insensitive
-    comport_list = []
-    if len(comport_list) == 0:
-        comport_list = []
-        for port in serial.tools.list_ports.grep(hardwareID):
-            comport_list.append(port[0])
-    return comport_list
-
-comport_list = find_teensys()
-print(comport_list)
 # import dearpygui.dearpygui as dpg
 
 # dpg.create_context()
@@ -102,3 +71,36 @@ print(comport_list)
 # dpg.show_viewport()
 # dpg.start_dearpygui()
 # dpg.destroy_context()
+
+import serial
+import serial.tools.list_ports
+port_list = list(serial.tools.list_ports.comports())
+print(port_list[1].pid) # 1155 for Teensy
+print(port_list[1].vid) # 5824 for Teensy
+print(port_list[0].hwid)
+print(port_list[0].device)
+# print(port_list.device)
+for thingy in port_list:
+    print(thingy.device)
+print(port_list[0].location)
+print(port_list[0].manufacturer)
+print(port_list[0].product)
+print(port_list[0].description)
+print(port_list[0].interface)
+print(port_list[0].name)
+print(port_list[0].serial_number)
+print(port_list[0].__dict__)
+print(port_list[1])
+print(port_list[2])
+
+# def find_teensys(hardwareID="16C0:0483"):
+#     hardwareID = "(?i)" + hardwareID  # forces case insensitive
+#     comport_list = []
+#     if len(comport_list) == 0:
+#         comport_list = []
+#         for port in serial.tools.list_ports.grep(hardwareID):
+#             comport_list.append(port[0])
+#     return comport_list
+
+# comport_list = find_teensys()
+# print(comport_list)
