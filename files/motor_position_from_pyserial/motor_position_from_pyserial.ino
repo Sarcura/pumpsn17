@@ -103,6 +103,7 @@ void loop()
     myTransfer.sendData(myTransfer.bytesRead);
   }
 
+  //while(ParsingStruct.motor0_enable == 0 || ParsingStruct.motor1_enable == 0 || ParsingStruct.motor2_enable == 0 || ParsingStruct.motor3_enable == 0){
   motor0.moveTo(ParsingStruct.motor0_position);
   motor1.moveTo(ParsingStruct.motor1_position);
   motor2.moveTo(ParsingStruct.motor2_position);
@@ -118,9 +119,9 @@ void loop()
   motor2.runSpeedToPosition();
   motor3.runSpeedToPosition();
 
+  /*
   if (motor0.distanceToGo()== 0){
     // since momentum might exist, wait a bit before switching off the motor
-    delay(500);
     digitalWrite (motor0_en, HIGH); //motor0
     //delay(500);
     ParsingStruct.motor0_enable = 1; // turn motor off after distanceToGo is 0
@@ -137,4 +138,5 @@ void loop()
     digitalWrite (motor3_en, HIGH); //motor3
     ParsingStruct.motor3_enable = 1;
   } 
+  */
 }  

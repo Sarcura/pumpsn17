@@ -72,26 +72,44 @@
 # dpg.start_dearpygui()
 # dpg.destroy_context()
 
-import serial
-import serial.tools.list_ports
-port_list = list(serial.tools.list_ports.comports())
-print(port_list[1].pid) # 1155 for Teensy
-print(port_list[1].vid) # 5824 for Teensy
-print(port_list[0].hwid)
-print(port_list[0].device)
-# print(port_list.device)
-for thingy in port_list:
-    print(thingy.device)
-print(port_list[0].location)
-print(port_list[0].manufacturer)
-print(port_list[0].product)
-print(port_list[0].description)
-print(port_list[0].interface)
-print(port_list[0].name)
-print(port_list[0].serial_number)
-print(port_list[0].__dict__)
-print(port_list[1])
-print(port_list[2])
+import dearpygui.dearpygui as dpg
+dpg.create_context()
+with dpg.window(label="Tutorial"):
+    dpg.add_checkbox(label="Radio Button1", tag="R1")
+    dpg.add_checkbox(label="Radio Button2", source="R1")
+    x = dpg.add_input_int(label="Text Input 1", default_value=4)
+    # x=int(dpg.get_item_user_data("Text Input 1"))
+    dpg.add_input_int(label="Text Input 2", default_value=x)
+    print(x)
+    # y=int(dpg.get_item_user_data("Text Input 2"))
+    # z=x*y
+    # dpg.add_input_int(label="Text Input 3", source=y)
+dpg.create_viewport(title='Custom Title', width=800, height=600)
+dpg.setup_dearpygui()
+dpg.show_viewport()
+dpg.start_dearpygui()
+dpg.destroy_context()
+
+# import serial
+# import serial.tools.list_ports
+# port_list = list(serial.tools.list_ports.comports())
+# print(port_list[1].pid) # 1155 for Teensy
+# print(port_list[1].vid) # 5824 for Teensy
+# print(port_list[0].hwid)
+# print(port_list[0].device)
+# # print(port_list.device)
+# for thingy in port_list:
+#     print(thingy.device)
+# print(port_list[0].location)
+# print(port_list[0].manufacturer)
+# print(port_list[0].product)
+# print(port_list[0].description)
+# print(port_list[0].interface)
+# print(port_list[0].name)
+# print(port_list[0].serial_number)
+# print(port_list[0].__dict__)
+# print(port_list[1])
+# print(port_list[2])
 
 # def find_teensys(hardwareID="16C0:0483"):
 #     hardwareID = "(?i)" + hardwareID  # forces case insensitive

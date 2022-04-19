@@ -2,3 +2,4 @@ pyserial
 pySerialTransfer
 numpy
 dearpygui
+PyYAML

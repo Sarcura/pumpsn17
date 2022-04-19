@@ -13,7 +13,7 @@ class Arduino:
         self.hwid = findusbport_hwid
         if findusbport_hwid and not port:
             print(f"No port specified, looking for devides with hwid {findusbport_hwid}")
-            self.findusbport()
+            self.get_availabile_port_list()
         else: # means, even if both are set
             self.port = port
         self.link = False
@@ -29,7 +29,7 @@ class Arduino:
         else:
             return f"No connection on port {self.port} currently opened. ({datetime.datetime.now()})"
 
-    def findusbport(self):
+    def get_availabile_port_list(self):
         if self.hwid:
             self.hwid = "(?i)" + self.hwid  # forces case insensitive
             comport_list = []
@@ -52,6 +52,7 @@ class Arduino:
             self.link = txfer.SerialTransfer(self.port)
             self.link.open()
             self.age = datetime.datetime.now()
+            # self.connected = True
             # time.sleep(1) # allow some time for the Arduino to completely reset
         except:
             import traceback
@@ -63,6 +64,7 @@ class Arduino:
             print(f"Disconnecting {self.port}")
             self.link.close()
             self.link = False
+            # self.connected = False
         except:
             import traceback
             traceback.print_exc()

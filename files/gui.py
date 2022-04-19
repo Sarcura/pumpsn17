@@ -1,120 +1,167 @@
 import dearpygui.dearpygui as dpg
-from pyserial_connection_arduino import connect_to_arduino, list_available_ports
-import numpy as np
+from themes import create_theme_imgui_light, create_theme_client, create_theme_server
+from arduino import Arduino
+from flowspeed_motorspeed import calculate_stepspeed
 
-dpg.create_context()
-#set_main_window_size(800, 500)
+class serial_ui():
+    CLIENT_THEME = None
+    SERVER_THEME = None
 
-# for saving variables
-comport = 'COM17'
-motor0_enable = 1
-motor0_direction = 0
-motor0_speed = 0
-motor1_enable = 1
-motor1_direction = 0
-motor1_speed = 0
-motor2_enable = 1
-motor2_direction = 0
-motor2_speed = 0
-motor3_enable = 1
-motor3_direction = 0
-motor3_speed = 0
+    def __init__(self):
+        # self.my_serial = mySerial()s
+        self.channel_m_per_s = 1
+        self.syringe_diameter = 12.08
+        self.channel_area_sqmm = 0.03*0.1
+        self.stepspeed = 0
+        self.motor_speed()
+        self.my_serial = Arduino(findusbport_hwid="16C0:0483")
+        # self.my_serial.hwid =  # should be changed by dropdown to search teensy, ardunio..
+        self.portList  = self.my_serial.get_availabile_port_list()
+        self.SELECTED_DEVICE = ""
+        self.dpg_setup()
+        self.create_primary_window()
+        serial_ui.CLIENT_THEME = create_theme_client()
+        serial_ui.SERVER_THEME = create_theme_server()
+        self.dpg_show_view_port()
+        LIGHT_THEME = create_theme_imgui_light()
+        dpg.bind_item_theme(self.prime_window, LIGHT_THEME)
+        dpg.set_primary_window(self.prime_window, True)
+        while dpg.is_dearpygui_running():
+            if self.my_serial.link:
+                # print(self.stepspeed)
+                pass
+                # print("teensy connected")
+                # recv_msg = self.my_serial.read_serial()
+                # if recv_msg:
+                #     max_length = 122
+                #     if len(recv_msg) > max_length:
+                #         truncated_msg = recv_msg[0:122-3] + "..."
+                #         self.log_msg(truncated_msg, serial_ui.SERVER_THEME)
+                #     else:
+                #         self.log_msg(recv_msg, serial_ui.SERVER_THEME)
+                #     print(f"Received: {recv_msg}")
+                #     self.log_msg(recv_msg, serial_ui.SERVER_THEME)
+            try:
+                dpg.render_dearpygui_frame()
+            except KeyboardInterrupt:
+                return
+            dpg.set_exit_callback(self.exit_callback)
+        self.dpg_cleanup()
 
-# callback
-def retrieve_log(sender, callback):
-    dpg.show_logger()
-    for element in pump_count:
-        dpg.log_info(dpg.get_value(f"pump {element}##inputtext"))
+    def motor_speed(self):
+        stepspeed = calculate_stepspeed(self.channel_m_per_s, self.syringe_diameter, self.channel_area_sqmm)
+        self.stepspeed =  int(round(stepspeed))
 
-    # log_info(get_value("comport##inputtext")
+    def update_ports_callback(self):
+        self.my_serial.get_availabile_port_list()
+        dpg.configure_item("__listPortsTag", items=self.my_serial.comport_list)
 
-# list all available exceptions
-# print(dir(locals()['__builtins__']))
+    def create_logger_window(self):
+        ## this creates a window at bottom
+        child_logger_id = dpg.add_child_window(tag="logger", width=870, height=340)
+        self.filter_id = dpg.add_filter_set(parent=child_logger_id)
 
-def send_motor_values(sender, callback):
+    def create_msg_and_filter_columns(self):
+        with dpg.group(horizontal=True):
+            with dpg.group() as text_group:
+                dpg.add_text(default_value="Message", parent=text_group)
+                dpg.add_text(default_value="Filter", parent=text_group)
+            with dpg.group() as inp_text_group:
+                user_msg = dpg.add_input_text(tag="usrMsgTxt",
+                        default_value="help", width=720,
+                        parent=inp_text_group)
+                dpg.add_input_text(callback=lambda sender: 
+                        dpg.set_value(self.filter_id, dpg.get_value(sender)),
+                        width=720, parent=inp_text_group)
+            with dpg.group() as button_group:
+                dpg.add_button(tag="sendMsgBtn", label="Send",
+                    callback=self.send_msg_to_serial_port_callback,
+                    user_data={'userMsgTag': user_msg}, parent=button_group)
+                dpg.add_button(label="Clear Filter",
+                    callback=lambda: dpg.delete_item(self.filter_id,
+                        children_only=True), parent=button_group)
 
-    # this should be generative code instead
-    # nr_of_motors = 4
-    value_list_to_send = []
-    for element in pump_count:
-        try:
-            print(f"Printing value of pump {element}")
-            print(dpg.get_value(f"pump {element}##inputtext"))
-            value_list_to_send.append(int(dpg.get_value(f"pump {element}##inputtext")))
-        except ValueError:
-            value_list_to_send.append(0)
 
-    print(f"Values in the list: {value_list_to_send}")
+    def create_primary_window(self):
+        with dpg.window(tag="Primary Window", autosize=True) as self.prime_window:
+            with dpg.group(horizontal=True):
+                # After clicking it will show a list view of ports
+                dpg.add_button(tag="avPortsBtn", label="Refresh Available Ports", callback=self.update_ports_callback)
+                if not self.portList:
+                    dpg.add_listbox(["No Ports available"], tag="__listPortsTag",
+                            width=300,
+                            num_items=-1, callback=self.selected_port_callback)
+                else:
+                    dpg.add_listbox(self.portList, tag="__listPortsTag",
+                        width=300, num_items=2,
+                        callback=self.selected_port_callback)
 
-    # this should be generative code instead
-    motor0_speed = value_list_to_send[0]
-    motor1_speed = value_list_to_send[1]
-    motor2_speed = value_list_to_send[2]
-    motor3_speed = value_list_to_send[3]
+            self.create_msg_and_filter_columns()
+            self.create_logger_window()
 
-    comport = dpg.get_value("comport##inputtext")
-    results = np.array(connect_to_arduino(comport,motor0_enable,motor0_direction,motor0_speed,
-        motor1_enable,motor1_direction,motor1_speed,motor2_enable,motor2_direction,motor2_speed,motor3_enable,motor3_direction,motor3_speed))
-    print(f"Received values: {results}")
-    # take ony every thrid value, those are the pump values
-    motorvalues = (results[2],results[5],results[8],results[11])
-    print(motorvalues)
-    nr_of_pump = 0
-    for rcvd_value in motorvalues:
-        print(rcvd_value)
-        dpg.set_value(f"received value pump {nr_of_pump}", rcvd_value)
-        nr_of_pump += 1
+    def dpg_setup(self):
+        dpg.create_context()
+        windowWidth  = 895
+        windowHeight = 450
+        dpg.create_viewport(title='Serial GUI', width=windowWidth, height=windowHeight)
+        dpg.setup_dearpygui()
 
-def adjust_comport(sender, callback):
-    print(dpg.get_value("comport##inputtext"))
-    # for some reason, this does not work:
-    # comport = get_value("comport##inputtext")
+    def selected_port_callback(self, Sender):
+        self.SELECTED_DEVICE = dpg.get_value(Sender).split(' ')[0]
+        print("selected device: ")
+        print(self.SELECTED_DEVICE)
+        # print(self.SELECTED_DEVICE.count(" "))
+        # print(len(self.SELECTED_DEVICE))
+        # print(type(self.SELECTED_DEVICE))
+        self.my_serial.port = self.SELECTED_DEVICE
+        self.my_serial.connect()
+        print(f"User selected: {self.SELECTED_DEVICE}")
 
-def find_comports(sender, callback):
-    #print(list_available_ports())
-    dpg.set_value("Click button for new search", list_available_ports())
 
-with dpg.window(label="Motor Window"):
+    def dpg_show_view_port(self):
+        dpg.set_viewport_resizable(False)
+        dpg.show_viewport()
 
-    dpg.add_text("To adjust the speed of the pumps, enter values and click on the respective send value.", wrap=500, bullet=True)
-    dpg.add_text("Press the 'print-log' button to display all values in an log", wrap = 500, bullet=True)
-    # button for listing all available COM ports
-    dpg.add_button(label="Search COM Ports", callback=find_comports)
-    # dpg.add_label_text("Click button for new search")
-    dpg.set_value("Click button for new search", "No values where received yet")
+    def dpg_start_dearpygui(self):
+        dpg.start_dearpygui()
 
-    dpg.add_text("Please choose the COM Port where the microcontroller is connected:")
-    dpg.add_input_text("comport##inputtext", hint="enter port, e.g. COM0", callback=adjust_comport)
-    # text input fields for all pumps are created
-    # for each value there is a button to send the entered value to the pump
-    dpg.add_text("Please choose speed for any/all pumps:")
-    pump_count = [0,1,2,3]
-    for element in pump_count:
-        dpg.add_input_text(f"pump {element}##inputtext", hint="enter speed in ticks", decimal=True)
-        # dpg.add_label_text(f"received value pump {element}")
-        dpg.set_value(f"received value pump {element}", "No values where received yet")
+    def dpg_cleanup(self):
+        dpg.destroy_context()
 
-    dpg.add_button(label="send pump values to microcontroller", callback=send_motor_values)
-    dpg.add_button(label="print-log", callback=retrieve_log)
+    def exit_callback(self):
+        dpg.stop_dearpygui()
 
-# def print_me(sender, data):
-#     print(get_value("syringe_diameter"))
-# add_radio_button("syringe_diameter", ['10', '15', '20'], default_value=1, callback=print_me)
+    def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
+        """
+        Callbacks may have up to 3 arguments in the following order.
 
-# this function starts the dearpygui
-dpg.create_viewport(title='Custom Title', width=800, height=600)
-dpg.setup_dearpygui()
-dpg.show_viewport()
-dpg.start_dearpygui()
-dpg.destroy_context()
+        sender:
+        the id of the UI item that submitted the callback
 
-# ↨
-# ↑
-# ↓
-# →
-# ←
-# ↔
-# ▲
-# ▼
-# ►
-# ◄
+        app_data:
+        occasionally UI items will send their own data (ex. file dialog)
+
+        user_data:
+        any python object you want to send to the function
+        """
+        msg_to_send = dpg.get_value(user_data['userMsgTag'])
+
+        if not self.SELECTED_DEVICE:
+            print("User is not selected any device.")
+        elif not self.my_serial.connected:
+            print("Device is not connected")
+        elif not msg_to_send:
+            print("No message.")
+        else:
+            self.my_serial.write_to_serial(msg_to_send)
+            self.log_msg(msg_to_send, serial_ui.CLIENT_THEME)
+            print(f"Sent |{msg_to_send}| to {self.SELECTED_DEVICE}")
+            dpg.configure_item("usrMsgTxt", default_value="")
+
+
+    def log_msg(self, message, custom_theme):
+        new_log = dpg.add_text(message, parent=self.filter_id, filter_key=message)
+        dpg.bind_item_theme(new_log, custom_theme)
+
+if __name__ == "__main__":
+    gui = serial_ui()

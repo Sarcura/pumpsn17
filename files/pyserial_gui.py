@@ -4,11 +4,15 @@
 
 from dis import disco
 import logging
-from pyserial_connection_arduino import Arduino
+from flowspeed_motorspeed import calculate_stepspeed
+from matplotlib.style import use
+import scipy as sp
+from arduino import Arduino
 # from pySerialTransfer import pySerialTransfer as txfer
 import serial.tools.list_ports
 import numpy as np
 import dearpygui.dearpygui as dpg
+import yaml
 # for saving variables
 comport = '/dev/ttyACM0'
 motor0_enable = 1
@@ -25,8 +29,34 @@ motor3_direction = 0
 motor3_speed = 1000
 
 dpg.create_context()
-dpg.create_viewport(title='PytonPyserialPumps', width=700, height=400)
+dpg.create_viewport(title='PytonPyserialPumps', width=900, height=400)
 dpg.setup_dearpygui()
+
+def save_state(sender, app_data, user_data):
+    file_name = "settings.yaml"
+    print(file_name, user_data)
+    speed_position = dpg.get_value(item=slider_speed_4int), dpg.get_value(item=slider_position_4int)
+    print(speed_position)
+    # with open(file_name) as f:
+    #     doc = yaml.safe_load(f)
+    # # doc = dpg.get_item_user_data("load_data", user_data=doc)
+    #     print(doc)
+    # if not doc:
+    # print("no data stored")
+    with open(file_name, 'w+') as f:
+        yaml.safe_dump(speed_position, f, default_flow_style=False)
+
+def load_state(sender, app_data, user_data):
+    file_name = "settings.yaml"
+    with open(file_name) as f:
+        doc = yaml.safe_load(f)
+        print("loaded data:")
+        print(doc)
+        speed_position = doc
+    # dpg.set_item_user_data("load_data", user_data=doc) 
+    dpg.set_value(item=slider_speed_4int, value=speed_position[0])
+    dpg.set_value(item=slider_position_4int, value=speed_position[1])
+
 
 def send_motor_values(sender, callback):
     print(f"Values in the position list: {dpg.get_value(item=slider_position_4int)}")
@@ -35,7 +65,6 @@ def send_motor_values(sender, callback):
     motor1_enable = 0
     motor2_enable = 0
     motor3_enable = 0
-    comport = "COM9"
     data_list = [motor0_enable, motor0_direction, dpg.get_value(item=slider_position_4int)[0], dpg.get_value(item=slider_speed_4int)[0],
         motor1_enable, motor1_direction, dpg.get_value(item=slider_position_4int)[1], dpg.get_value(item=slider_speed_4int)[1],
         motor2_enable, motor2_direction, dpg.get_value(item=slider_position_4int)[2], dpg.get_value(item=slider_speed_4int)[2],
@@ -126,12 +155,13 @@ def find_comports(sender, callback):
         dpg.delete_item(item=element.device)
         dpg.add_button(label=f"Connect to {element}", before="search_button", parent="search_button", tag=element.device, callback=connect_usb, user_data=False)
 
-with dpg.window(label="Motor Window", tag="motor_window", height=300):
+with dpg.window(label="Motor Window", tag="motor_window", height=350):
 
     dpg.add_text("To adjust the position of the motors, enter values and click on the respective send value.", wrap=500, bullet=True)
     dpg.add_text("Press the 'print-log' button to display all values in an log", wrap = 500, bullet=True)
     # button for listing all available COM ports and adding "connect" buttons for each of them
     dpg.add_button(label="Search COM Ports", callback=find_comports, tag="search_button")
+    dpg.disable_item("search_button")
     dpg.add_button(label="Search Teensys", callback=find_teensys, tag="search_teensy_button", user_data="16C0:0483")
 
     # print(dpg.get_item_theme("search_button"))
@@ -139,15 +169,30 @@ with dpg.window(label="Motor Window", tag="motor_window", height=300):
     dpg.add_text("Please search COM Ports and connect the COM Port where the microcontroller is located.")
     
     dpg.add_text("Please choose position for any/all motors:")
-    slider_position_4int = dpg.add_slider_intx(label="Motor position 0,1,2,3", min_value=-10000, max_value=10000, width=500)
-    slider_speed_4int = dpg.add_slider_intx(label="Motor speed 0,1,2,3", min_value=-10000, max_value=10000, width=500)
-    
+
+    channel_m_per_s = dpg.add_input_int(label="Channel [m/s]", default_value=1, tag="channel_m_per_s")
+    syringe_diameter = dpg.add_input_float(label="syringe diameter", default_value=12.08, tag="syringe_diameter")
+    channel_area_sqmm = dpg.add_input_float(label="channel area", default_value=0.003, tag="channel_area_sqmm")
+    print(channel_area_sqmm)
+    channel_area_sqmm = dpg.get_item_user_data("channel_area_sqmm")
+    print("after get {channel_area_sqmm}")
+
+    stepspeed = calculate_stepspeed(channel_m_per_s=1,syringe_diameter=1,channel_area_sqmm=1)
+    print(stepspeed)
+
+    slider_position_4int = dpg.add_slider_intx(label="Motor position 0,1,2,3", min_value=-1000000, max_value=1000000, width=700)
+    default_speed_value=[stepspeed,5000,5000,5000]
+    slider_speed_4int = dpg.add_slider_intx(label="Motor speed 0,1,2,3", min_value=0, max_value=10000, default_value=default_speed_value, width=700)
+
+    dpg.add_button(label="Save Data", callback=save_state, tag="save_data", user_data=["some more data"])
+    dpg.add_button(label="Load Data", callback=load_state, tag="load_data")
+   
     dpg.add_button(label="Send to Arduino", callback=send_motor_values)
     dpg.add_button(label="Stop motors", callback=send_stop_values)
     # print children
-    print(dpg.get_item_children(item="search_button"), 1)
-    print(dpg.get_item_children(item="motor_window"), 1)
-    print(dpg.get_item_children(dpg.last_root(), 1))
+    # print(dpg.get_item_children(item="search_button"), 1)
+    # print(dpg.get_item_children(item="motor_window"), 1)
+    # print(dpg.get_item_children(dpg.last_root(), 1))
     # dpg.delete_item(item="search_button", children_only=True)
 
 
