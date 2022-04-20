@@ -16,7 +16,11 @@ class serial_ui():
         self.motor_speed()
         self.my_serial = Arduino(findusbport_hwid="16C0:0483")
         # self.my_serial.hwid =  # should be changed by dropdown to search teensy, ardunio..
-        self.portList  = self.my_serial.get_availabile_port_list()
+        try:
+            self.portList  = self.my_serial.get_availabile_port_list()
+        except:
+            self.portList  = ["COMx"]
+            print("no devices found.")
         self.SELECTED_DEVICE = ""
         self.dpg_setup()
         self.create_primary_window()
@@ -61,6 +65,25 @@ class serial_ui():
         child_logger_id = dpg.add_child_window(tag="logger", width=870, height=340)
         self.filter_id = dpg.add_filter_set(parent=child_logger_id)
 
+    def create_send_speed(self):
+        with dpg.group(horizontal=True):
+            with dpg.group() as text_group:
+                dpg.add_text(default_value="Message", parent=text_group)
+            with dpg.group() as inp_values_group:
+                user_msg = dpg.add_input_float(tag="sendSpeedFloat",
+                        default_value=1, max_value=3, width=720,
+                        parent=inp_values_group)
+                dpg.add_input_text(callback=lambda sender: 
+                        dpg.set_value(self.filter_id, dpg.get_value(sender)),
+                        width=720, parent=inp_values_group)
+            with dpg.group() as button_group:
+                dpg.add_button(tag="sendSpeedBtn", label="Send",
+                    callback=self.send_speed_to_arduino,
+                    user_data={'userSpeedTag': user_msg}, parent=button_group)
+                dpg.add_button(label="Clear Filter",
+                    callback=lambda: dpg.delete_item(self.filter_id,
+                        children_only=True), parent=button_group)
+
     def create_msg_and_filter_columns(self):
         with dpg.group(horizontal=True):
             with dpg.group() as text_group:
@@ -96,7 +119,8 @@ class serial_ui():
                         width=300, num_items=2,
                         callback=self.selected_port_callback)
 
-            self.create_msg_and_filter_columns()
+            self.create_send_speed()
+            # self.create_msg_and_filter_columns()
             self.create_logger_window()
 
     def dpg_setup(self):
@@ -131,32 +155,54 @@ class serial_ui():
     def exit_callback(self):
         dpg.stop_dearpygui()
 
-    def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
-        """
-        Callbacks may have up to 3 arguments in the following order.
+    def send_speed_to_arduino(self, sender, app_data, user_data):
+        self.motor_speed()
+        motor0_enable = 1
+        motor0_direction = 0
+        motor1_enable = 1
+        motor1_direction = 0
+        motor2_enable = 1
+        motor2_direction = 0
+        motor3_enable = 1
+        motor3_direction = 0
+        data_list = [motor0_enable, motor0_direction, self.stepspeed, self.stepspeed,
+            motor1_enable, motor1_direction, dpg.get_value(user_data['userSpeedTag']), dpg.get_value(user_data['userSpeedTag']),
+            motor2_enable, motor2_direction, dpg.get_value(user_data['userSpeedTag']), dpg.get_value(user_data['userSpeedTag']),
+            motor3_enable, motor3_direction, dpg.get_value(user_data['userSpeedTag']), dpg.get_value(user_data['userSpeedTag'])]
 
-        sender:
-        the id of the UI item that submitted the callback
+        # data_list = [motor0_enable, motor0_direction, dpg.get_value(item=slider_position_4int)[0], dpg.get_value(item=slider_speed_4int)[0],
+        #     motor1_enable, motor1_direction, dpg.get_value(item=slider_position_4int)[1], dpg.get_value(item=slider_speed_4int)[1],
+        #     motor2_enable, motor2_direction, dpg.get_value(item=slider_position_4int)[2], dpg.get_value(item=slider_speed_4int)[2],
+        #     motor3_enable, motor3_direction, dpg.get_value(item=slider_position_4int)[3], dpg.get_value(item=slider_speed_4int)[3]]
 
-        app_data:
-        occasionally UI items will send their own data (ex. file dialog)
+        self.my_serial.send_to_arduino(data_list)
 
-        user_data:
-        any python object you want to send to the function
-        """
-        msg_to_send = dpg.get_value(user_data['userMsgTag'])
+    # def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
+    #     """
+    #     Callbacks may have up to 3 arguments in the following order.
 
-        if not self.SELECTED_DEVICE:
-            print("User is not selected any device.")
-        elif not self.my_serial.connected:
-            print("Device is not connected")
-        elif not msg_to_send:
-            print("No message.")
-        else:
-            self.my_serial.write_to_serial(msg_to_send)
-            self.log_msg(msg_to_send, serial_ui.CLIENT_THEME)
-            print(f"Sent |{msg_to_send}| to {self.SELECTED_DEVICE}")
-            dpg.configure_item("usrMsgTxt", default_value="")
+    #     sender:
+    #     the id of the UI item that submitted the callback
+
+    #     app_data:
+    #     occasionally UI items will send their own data (ex. file dialog)
+
+    #     user_data:
+    #     any python object you want to send to the function
+    #     """
+    #     msg_to_send = dpg.get_value(user_data['userSpeedTag'])
+
+    #     if not self.SELECTED_DEVICE:
+    #         print("User is not selected any device.")
+    #     elif not self.my_serial.link:
+    #         print("Device is not connected")
+    #     elif not msg_to_send:
+    #         print("No message.")
+    #     else:
+    #         self.my_serial.write_to_serial(msg_to_send)
+    #         self.log_msg(msg_to_send, serial_ui.CLIENT_THEME)
+    #         print(f"Sent |{msg_to_send}| to {self.SELECTED_DEVICE}")
+    #         dpg.configure_item("usrMsgTxt", default_value="")
 
 
     def log_msg(self, message, custom_theme):

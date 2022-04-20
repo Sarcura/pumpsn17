@@ -42,7 +42,7 @@ class Arduino:
                 print(f"Warning, multiple devies with the same hwid found. Access by comport_list.")
                 print(f"First device of the list will be used for connection: {self.comport_list}")
                 self.found_multiple_devices = True # all found devices are stored for later access
-            self.port = comport_list[0] # only takes the first device with the queried hardware id
+                self.port = comport_list[0] # only takes the first device with the queried hardware id
         else:
             print("No hwid specified, search aborted.")
 
@@ -111,7 +111,10 @@ class Arduino:
         except:
             import traceback
             traceback.print_exc()
-            self.link.close()
+            if self.link:
+                self.link.close()
+            else:
+                print("no open link found")
 
 if __name__ == "__main__":
     comport = 'COM9'
@@ -132,8 +135,8 @@ if __name__ == "__main__":
         motor2_enable, motor2_direction, motor2_speed, motor3_enable, motor3_direction, motor3_speed]
 
     teensy1 = Arduino(findusbport_hwid="16C0:0483")
+    # teensy1 = Arduino(port="COM9")
 
-    teensy1 = Arduino(port="COM9")
     teensy1.connect()
     # import time
     # time.sleep(1)
