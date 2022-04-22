@@ -9,10 +9,22 @@ class serial_ui():
 
     def __init__(self):
         # self.my_serial = mySerial()s
-        self.channel_m_per_s = 1
-        self.syringe_diameter = 12.08
-        self.channel_area_sqmm = 0.03*0.1
-        self.stepspeed = 0
+        self.channel_m_per_s_1 = 1
+        self.syringe_diameter_1 = 12.08
+        self.channel_area_sqmm_1 = 0.03*0.1
+        self.channel_m_per_s_2 = 1
+        self.syringe_diameter_2 = 12.08
+        self.channel_area_sqmm_2 = 0.03*0.1
+        self.channel_m_per_s_3 = 1
+        self.syringe_diameter_3 = 12.08
+        self.channel_area_sqmm_3 = 0.03*0.1
+        self.channel_m_per_s_4 = 1
+        self.syringe_diameter_4 = 12.08
+        self.channel_area_sqmm_4 = 0.03*0.1
+        self.stepspeed_1 = 0
+        self.stepspeed_2 = 0
+        self.stepspeed_3 = 0
+        self.stepspeed_4 = 0
         self.motor_speed()
         self.my_serial = Arduino(findusbport_hwid="16C0:0483")
         # self.my_serial.hwid =  # should be changed by dropdown to search teensy, ardunio..
@@ -53,8 +65,15 @@ class serial_ui():
         self.dpg_cleanup()
 
     def motor_speed(self):
-        stepspeed = calculate_stepspeed(self.channel_m_per_s, self.syringe_diameter, self.channel_area_sqmm)
-        self.stepspeed =  int(round(stepspeed))
+        stepspeed1 = calculate_stepspeed(self.channel_m_per_s_1, self.syringe_diameter_1, self.channel_area_sqmm_1)
+        stepspeed2 = calculate_stepspeed(self.channel_m_per_s_2, self.syringe_diameter_2, self.channel_area_sqmm_2)
+        stepspeed3 = calculate_stepspeed(self.channel_m_per_s_3, self.syringe_diameter_3, self.channel_area_sqmm_3)
+        stepspeed4 = calculate_stepspeed(self.channel_m_per_s_4, self.syringe_diameter_4, self.channel_area_sqmm_4)
+        
+        self.stepspeed_1 =  int(round(stepspeed1))
+        self.stepspeed_2 =  int(round(stepspeed2))
+        self.stepspeed_3 =  int(round(stepspeed3))
+        self.stepspeed_4 =  int(round(stepspeed4))
 
     def update_ports_callback(self):
         self.my_serial.get_availabile_port_list()
@@ -68,41 +87,65 @@ class serial_ui():
     def create_send_speed(self):
         with dpg.group(horizontal=True):
             with dpg.group() as text_group:
-                dpg.add_text(default_value="Message", parent=text_group)
+                dpg.add_text(default_value="Pump 1 [m/s]", parent=text_group)
+                dpg.add_text(default_value="Pump 2 [m/s]", parent=text_group)
+                dpg.add_text(default_value="Pump 3 [m/s]", parent=text_group)
+                dpg.add_text(default_value="Pump 4 [m/s]", parent=text_group)
             with dpg.group() as inp_values_group:
-                user_msg = dpg.add_input_float(tag="sendSpeedFloat",
+                user_msg1 = dpg.add_input_float(tag="sendSpeedFloat1",
                         default_value=1, max_value=3, width=720,
                         parent=inp_values_group)
-                dpg.add_input_text(callback=lambda sender: 
-                        dpg.set_value(self.filter_id, dpg.get_value(sender)),
-                        width=720, parent=inp_values_group)
+                user_msg2 = dpg.add_input_float(tag="sendSpeedFloat2",
+                        default_value=1, max_value=3, width=720,
+                        parent=inp_values_group)
+                user_msg3 = dpg.add_input_float(tag="sendSpeedFloat3",
+                        default_value=1, max_value=3, width=720,
+                        parent=inp_values_group)
+                user_msg4 = dpg.add_input_float(tag="sendSpeedFloat4",
+                        default_value=1, max_value=3, width=720,
+                        parent=inp_values_group)
             with dpg.group() as button_group:
-                dpg.add_button(tag="sendSpeedBtn", label="Send",
+                dpg.add_button(tag="sendSpeedBtn1", label="Set Pump 1",
                     callback=self.send_speed_to_arduino,
-                    user_data={'userSpeedTag': user_msg}, parent=button_group)
-                dpg.add_button(label="Clear Filter",
-                    callback=lambda: dpg.delete_item(self.filter_id,
-                        children_only=True), parent=button_group)
+                    user_data={'userSpeedTag1': user_msg1}, parent=button_group)
+                    # user_data={'userSpeedTag1': user_msg,'userSpeedTag1': user_msg}, parent=button_group)
+                dpg.add_button(tag="sendSpeedBtn2", label="Set Pump 2",
+                    callback=self.send_speed_to_arduino,
+                    user_data={'userSpeedTag2': user_msg2}, parent=button_group)
+                dpg.add_button(tag="sendSpeedBtn3", label="Set Pump 3",
+                    callback=self.send_speed_to_arduino,
+                    user_data={'userSpeedTag3': user_msg3}, parent=button_group)
+                dpg.add_button(tag="sendSpeedBtn4", label="Set Pump 4",
+                    callback=self.send_speed_to_arduino,
+                    user_data={'userSpeedTag4': user_msg4}, parent=button_group)
+                dpg.add_button(tag="sendSpeedBtn", label="Set Pumps",
+                    callback=self.send_speed_to_arduino,
+                    user_data=[user_msg1,user_msg2,user_msg3,user_msg4], parent=button_group)
 
-    def create_msg_and_filter_columns(self):
-        with dpg.group(horizontal=True):
-            with dpg.group() as text_group:
-                dpg.add_text(default_value="Message", parent=text_group)
-                dpg.add_text(default_value="Filter", parent=text_group)
-            with dpg.group() as inp_text_group:
-                user_msg = dpg.add_input_text(tag="usrMsgTxt",
-                        default_value="help", width=720,
-                        parent=inp_text_group)
-                dpg.add_input_text(callback=lambda sender: 
-                        dpg.set_value(self.filter_id, dpg.get_value(sender)),
-                        width=720, parent=inp_text_group)
-            with dpg.group() as button_group:
-                dpg.add_button(tag="sendMsgBtn", label="Send",
-                    callback=self.send_msg_to_serial_port_callback,
-                    user_data={'userMsgTag': user_msg}, parent=button_group)
-                dpg.add_button(label="Clear Filter",
-                    callback=lambda: dpg.delete_item(self.filter_id,
-                        children_only=True), parent=button_group)
+# dictionary_name[key] = value
+                # dpg.add_button(label="Clear Filter",
+                #     callback=lambda: dpg.delete_item(self.filter_id,
+                #         children_only=True), parent=button_group)
+
+    # def create_msg_and_filter_columns(self):
+    #     with dpg.group(horizontal=True):
+    #         with dpg.group() as text_group:
+    #             dpg.add_text(default_value="Pump 1", parent=text_group)
+    #             dpg.add_text(default_value="Filter", parent=text_group)
+    #         with dpg.group() as inp_text_group:
+    #             user_msg = dpg.add_input_text(tag="usrMsgTxt",
+    #                     default_value="help", width=720,
+    #                     parent=inp_text_group)
+    #             dpg.add_input_text(callback=lambda sender: 
+    #                     dpg.set_value(self.filter_id, dpg.get_value(sender)),
+    #                     width=720, parent=inp_text_group)
+    #         with dpg.group() as button_group:
+    #             dpg.add_button(tag="sendMsgBtn", label="Send",
+    #                 callback=self.send_msg_to_serial_port_callback,
+    #                 user_data={'userMsgTag': user_msg}, parent=button_group)
+    #             dpg.add_button(label="Clear Filter",
+    #                 callback=lambda: dpg.delete_item(self.filter_id,
+    #                     children_only=True), parent=button_group)
 
 
     def create_primary_window(self):
@@ -156,6 +199,35 @@ class serial_ui():
         dpg.stop_dearpygui()
 
     def send_speed_to_arduino(self, sender, app_data, user_data):
+        print(f"user data: {user_data}")
+        self.channel_m_per_s_1, self.channel_m_per_s_2, self.channel_m_per_s_3, self.channel_m_per_s_4 = dpg.get_value(user_data[0]),dpg.get_value(user_data[1]),dpg.get_value(user_data[2]),dpg.get_value(user_data[3])
+        # except:
+        #     print("no data for all four pumps set")
+        try:
+            self.channel_m_per_s_1 = dpg.get_value(user_data['userSpeedTag1'])
+            print("tag 1 received")
+        except:
+            print("no value set for channel 1")
+        try:
+            self.channel_m_per_s_2 = dpg.get_value(user_data['userSpeedTag2'])
+            print("tag 2 received")
+        except:
+            print("no value set for channel 2")
+        try:
+            self.channel_m_per_s_3 = dpg.get_value(user_data['userSpeedTag3'])
+            print("tag 3 received")
+        except:
+            print("no value set for channel 3")
+        try:
+            self.channel_m_per_s_4 = dpg.get_value(user_data['userSpeedTag4'])
+            print("tag 4 received")
+        except:
+            print("no value set for channel 4")
+        # self.channel_m_per_s_1 = dpg.get_value(user_data['userSpeedTag1'])
+        # self.channel_m_per_s_2 = dpg.get_value(user_data['userSpeedTag2'])
+        # self.channel_m_per_s_3 = dpg.get_value(user_data['userSpeedTag3'])
+        # self.channel_m_per_s_4 = dpg.get_value(user_data['userSpeedTag4'])
+        
         self.motor_speed()
         motor0_enable = 1
         motor0_direction = 0
@@ -165,10 +237,14 @@ class serial_ui():
         motor2_direction = 0
         motor3_enable = 1
         motor3_direction = 0
-        data_list = [motor0_enable, motor0_direction, self.stepspeed, self.stepspeed,
-            motor1_enable, motor1_direction, dpg.get_value(user_data['userSpeedTag']), dpg.get_value(user_data['userSpeedTag']),
-            motor2_enable, motor2_direction, dpg.get_value(user_data['userSpeedTag']), dpg.get_value(user_data['userSpeedTag']),
-            motor3_enable, motor3_direction, dpg.get_value(user_data['userSpeedTag']), dpg.get_value(user_data['userSpeedTag'])]
+        data_list = [motor0_enable, motor0_direction, self.stepspeed_1, self.stepspeed_1,
+            motor1_enable, motor1_direction, self.stepspeed_2, self.stepspeed_2,
+            motor2_enable, motor2_direction, self.stepspeed_3, self.stepspeed_3,
+            motor3_enable, motor3_direction, self.stepspeed_4, self.stepspeed_4]
+
+            # motor1_enable, motor1_direction, dpg.get_value(user_data['userSpeedTag1']), dpg.get_value(user_data['userSpeedTag1']),
+            # motor2_enable, motor2_direction, dpg.get_value(user_data['userSpeedTag2']), dpg.get_value(user_data['userSpeedTag2']),
+            # motor3_enable, motor3_direction, dpg.get_value(user_data['userSpeedTag3']), dpg.get_value(user_data['userSpeedTag3'])]
 
         # data_list = [motor0_enable, motor0_direction, dpg.get_value(item=slider_position_4int)[0], dpg.get_value(item=slider_speed_4int)[0],
         #     motor1_enable, motor1_direction, dpg.get_value(item=slider_position_4int)[1], dpg.get_value(item=slider_speed_4int)[1],
