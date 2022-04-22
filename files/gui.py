@@ -91,6 +91,12 @@ class serial_ui():
                 dpg.add_text(default_value="Pump 2 [m/s]", parent=text_group)
                 dpg.add_text(default_value="Pump 3 [m/s]", parent=text_group)
                 dpg.add_text(default_value="Pump 4 [m/s]", parent=text_group)
+                dpg.add_text(default_value="Channel 1 [mm²]", parent=text_group)
+                dpg.add_text(default_value="Channel 2 [mm²]", parent=text_group)
+                dpg.add_text(default_value="Channel 3 [mm²]", parent=text_group)
+                dpg.add_text(default_value="Channel 4 [mm²]", parent=text_group)
+                dpg.add_text(default_value="Warning, speed might be higher, ", parent=text_group)
+                dpg.add_text(default_value="because two fluids come together", parent=text_group)
             with dpg.group() as inp_values_group:
                 user_msg1 = dpg.add_input_float(tag="sendSpeedFloat1",
                         default_value=1, max_value=3, width=180,
@@ -125,12 +131,20 @@ class serial_ui():
                 # self.channel_area_sqmm_3 = 0.03*0.1
                 # self.syringe_diameter_4 = 12.08
                 # self.channel_area_sqmm_4 = 0.03*0.1
-
+            with dpg.group(horizontal=True) as syringe_values_group:
                 syringeareas = [4.78, 8.66, 12.06, 14.5, 19.13, 21.7, 26.7] # BD plastic
-                syringearea_1 = dpg.add_listbox(syringeareas, tag="__listSyringes1", width=80, num_items=7) 
-                syringearea_2 = dpg.add_listbox(syringeareas, tag="__listSyringes2", width=80, num_items=7) 
-                syringearea_3 = dpg.add_listbox(syringeareas, tag="__listSyringes3", width=80, num_items=7) 
-                syringearea_4 = dpg.add_listbox(syringeareas, tag="__listSyringes4", width=80, num_items=7) 
+                with dpg.group():
+                    dpg.add_text(default_value="syringe 1 Ø [mm]")
+                    syringearea_1 = dpg.add_listbox(syringeareas, tag="__listSyringes1", width=80, num_items=7) 
+                with dpg.group():
+                    dpg.add_text(default_value="syringe 2 Ø [mm]")
+                    syringearea_2 = dpg.add_listbox(syringeareas, tag="__listSyringes2", width=80, num_items=7) 
+                with dpg.group():
+                    dpg.add_text(default_value="syringe 3 Ø [mm]")
+                    syringearea_3 = dpg.add_listbox(syringeareas, tag="__listSyringes3", width=80, num_items=7) 
+                with dpg.group():
+                    dpg.add_text(default_value="syringe 4 Ø [mm]")
+                    syringearea_4 = dpg.add_listbox(syringeareas, tag="__listSyringes4", width=80, num_items=7) 
 
             with dpg.group() as button_group:
                 dpg.add_button(tag="sendSpeedBtn1", label="Set Pump 1",
@@ -202,7 +216,7 @@ class serial_ui():
 
     def dpg_setup(self):
         dpg.create_context()
-        windowWidth  = 895
+        windowWidth  = 1100
         windowHeight = 450
         dpg.create_viewport(title='Serial GUI', width=windowWidth, height=windowHeight)
         dpg.setup_dearpygui()
