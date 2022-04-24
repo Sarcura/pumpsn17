@@ -97,6 +97,13 @@ class serial_ui():
                 dpg.add_text(default_value="Channel 4 [mm²]", parent=text_group)
                 dpg.add_text(default_value="Warning, speed might be higher, ", parent=text_group)
                 dpg.add_text(default_value="because two fluids come together", parent=text_group)
+
+                width, height, channels, data = dpg.load_image("sarcura.png") 
+                with dpg.texture_registry():
+                    texture_id = dpg.add_static_texture(width, height, data) 
+                dpg.add_image(texture_id)
+                
+                # dpg.add_image(texture_tag="sarcura", value="sarcura.svg")
             with dpg.group() as inp_values_group:
                 user_msg1 = dpg.add_input_float(tag="sendSpeedFloat1",
                         default_value=1, max_value=3, width=180,
@@ -217,7 +224,7 @@ class serial_ui():
     def dpg_setup(self):
         dpg.create_context()
         windowWidth  = 1100
-        windowHeight = 450
+        windowHeight = 500
         dpg.create_viewport(title='Serial GUI', width=windowWidth, height=windowHeight)
         dpg.setup_dearpygui()
 
@@ -231,7 +238,6 @@ class serial_ui():
         self.my_serial.port = self.SELECTED_DEVICE
         self.my_serial.connect()
         print(f"User selected: {self.SELECTED_DEVICE}")
-
 
     def dpg_show_view_port(self):
         dpg.set_viewport_resizable(False)
@@ -256,7 +262,7 @@ class serial_ui():
         self.syringe_diameter_4 = float(dpg.get_value(user_data['syringe_area_4']))
         self.channel_area_sqmm_1 = float(dpg.get_value(user_data['channel_area_sqmm_1']))
         self.channel_area_sqmm_2 = float(dpg.get_value(user_data['channel_area_sqmm_2']))
-        self.channel_area_sqmm_31 = float(dpg.get_value(user_data['channel_area_sqmm_3']))
+        self.channel_area_sqmm_3 = float(dpg.get_value(user_data['channel_area_sqmm_3']))
         self.channel_area_sqmm_4 = float(dpg.get_value(user_data['channel_area_sqmm_4']))
 
         # self.channel_m_per_s_1 = dpg.get_value(user_data['userSpeedTag1'])
