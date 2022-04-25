@@ -185,8 +185,38 @@ class serial_ui():
                     'syringe_area_3' : syringearea_3, 'syringe_area_4' : syringearea_4, 
                     }, parent=send_group)
                     
-            dpg.add_button(tag="sendSpeedBtn2ms", label="Set Pumps to 2 m/s",
-                callback=self.set_ms_and_send_speed_to_arduino,
+            dpg.add_button(tag="sendSpeedBtn05ms", label="Set Pumps to 0.5 m/s",
+                callback=self.set_ms_05_and_send_speed_to_arduino,
+                user_data={'channel_flow_speed': channel_flow_speed,
+                    'userSpeedTag1': user_msg1, 'userSpeedTag2': user_msg2,
+                    'userSpeedTag3': user_msg3,'userSpeedTag4': user_msg4,
+                    'channel_area_sqmm_1': channel_area_sqmm_1, 'channel_area_sqmm_2': channel_area_sqmm_2, 
+                    'channel_area_sqmm_3': channel_area_sqmm_3, 'channel_area_sqmm_4': channel_area_sqmm_4, 
+                    'syringe_area_1' : syringearea_1, 'syringe_area_2' : syringearea_2, 
+                    'syringe_area_3' : syringearea_3, 'syringe_area_4' : syringearea_4, 
+                    }, parent=send_group)
+            dpg.add_button(tag="sendSpeedBtn10ms", label="Set Pumps to 1 m/s",
+                callback=self.set_ms_10_and_send_speed_to_arduino,
+                user_data={'channel_flow_speed': channel_flow_speed,
+                    'userSpeedTag1': user_msg1, 'userSpeedTag2': user_msg2,
+                    'userSpeedTag3': user_msg3,'userSpeedTag4': user_msg4,
+                    'channel_area_sqmm_1': channel_area_sqmm_1, 'channel_area_sqmm_2': channel_area_sqmm_2, 
+                    'channel_area_sqmm_3': channel_area_sqmm_3, 'channel_area_sqmm_4': channel_area_sqmm_4, 
+                    'syringe_area_1' : syringearea_1, 'syringe_area_2' : syringearea_2, 
+                    'syringe_area_3' : syringearea_3, 'syringe_area_4' : syringearea_4, 
+                    }, parent=send_group)
+            dpg.add_button(tag="sendSpeedBtn15ms", label="Set Pumps to 1.5 m/s",
+                callback=self.set_ms_15_and_send_speed_to_arduino,
+                user_data={'channel_flow_speed': channel_flow_speed,
+                    'userSpeedTag1': user_msg1, 'userSpeedTag2': user_msg2,
+                    'userSpeedTag3': user_msg3,'userSpeedTag4': user_msg4,
+                    'channel_area_sqmm_1': channel_area_sqmm_1, 'channel_area_sqmm_2': channel_area_sqmm_2, 
+                    'channel_area_sqmm_3': channel_area_sqmm_3, 'channel_area_sqmm_4': channel_area_sqmm_4, 
+                    'syringe_area_1' : syringearea_1, 'syringe_area_2' : syringearea_2, 
+                    'syringe_area_3' : syringearea_3, 'syringe_area_4' : syringearea_4, 
+                    }, parent=send_group)
+            dpg.add_button(tag="sendSpeedBtn20ms", label="Set Pumps to 2 m/s",
+                callback=self.set_ms_20_and_send_speed_to_arduino,
                 user_data={'channel_flow_speed': channel_flow_speed,
                     'userSpeedTag1': user_msg1, 'userSpeedTag2': user_msg2,
                     'userSpeedTag3': user_msg3,'userSpeedTag4': user_msg4,
@@ -329,7 +359,16 @@ class serial_ui():
 
         self.my_serial.send_to_arduino(data_list)
 
-    def set_ms_and_send_speed_to_arduino(self, sender, app_data, user_data):
+    def set_ms_05_and_send_speed_to_arduino(self, sender, app_data, user_data):
+        dpg.set_value("sendSpeedFloat", float(0.5))
+        self.send_speed_to_arduino(self, app_data, user_data)
+    def set_ms_10_and_send_speed_to_arduino(self, sender, app_data, user_data):
+        dpg.set_value("sendSpeedFloat", float(1))
+        self.send_speed_to_arduino(self, app_data, user_data)
+    def set_ms_15_and_send_speed_to_arduino(self, sender, app_data, user_data):
+        dpg.set_value("sendSpeedFloat", float(1.5))
+        self.send_speed_to_arduino(self, app_data, user_data)
+    def set_ms_20_and_send_speed_to_arduino(self, sender, app_data, user_data):
         dpg.set_value("sendSpeedFloat", float(2))
         self.send_speed_to_arduino(self, app_data, user_data)
 
