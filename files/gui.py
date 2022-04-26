@@ -32,6 +32,7 @@ class serial_ui():
         self.position_4 = 100000
         self.motor_speed()
         self.my_serial = Arduino(findusbport_hwid="16C0:0483")
+        # self.update_ports_callback()
         # self.my_serial.hwid =  # should be changed by dropdown to search teensy, ardunio..
         try:
             self.portList  = self.my_serial.get_availabile_port_list()
@@ -257,7 +258,7 @@ class serial_ui():
     def dpg_setup(self):
         dpg.create_context()
         windowWidth  = 1100
-        windowHeight = 525
+        windowHeight = 450
         dpg.create_viewport(title='Serial GUI', width=windowWidth, height=windowHeight)
         dpg.setup_dearpygui()
 
