@@ -30,14 +30,16 @@ class serial_ui():
         self.position_2 = 100000
         self.position_3 = 100000
         self.position_4 = 100000
+        self.sw_endstop = 1000000
         self.motor_speed()
         self.my_serial = Arduino(findusbport_hwid="16C0:0483")
         # self.update_ports_callback()
         # self.my_serial.hwid =  # should be changed by dropdown to search teensy, ardunio..
         try:
             self.portList  = self.my_serial.get_availabile_port_list()
+            print(self.portList)
         except:
-            self.portList  = ["COMx"]
+            self.portList  = []
             print("no devices found.")
         self.SELECTED_DEVICE = ""
         self.dpg_setup()
@@ -179,7 +181,7 @@ class serial_ui():
         dpg.add_separator()
 
         with dpg.group() as send_group:
-            user_data_dict = {'channel_flow_speed': channel_flow_speed,
+            self.pump_settings = {'channel_flow_speed': channel_flow_speed,
                     'userSpeedTag1': user_msg1, 'userSpeedTag2': user_msg2,
                     'userSpeedTag3': user_msg3,'userSpeedTag4': user_msg4,
                     'channel_area_sqmm_1': channel_area_sqmm_1, 'channel_area_sqmm_2': channel_area_sqmm_2, 
@@ -189,22 +191,22 @@ class serial_ui():
                     }
             dpg.add_button(tag="sendSpeedBtn", label="Start Pumps",
                 callback=self.send_speed_to_arduino,
-                user_data=user_data_dict, parent=send_group)
+                user_data=self.pump_settings, parent=send_group)
             dpg.add_button(tag="sendSpeedBtn05ms", label="Set Pumps to 0.5 m/s",
                 callback=self.set_ms_05_and_send_speed_to_arduino,
-                user_data=user_data_dict, parent=send_group)
+                user_data=self.pump_settings, parent=send_group)
             dpg.add_button(tag="sendSpeedBtn10ms", label="Set Pumps to 1 m/s",
                 callback=self.set_ms_10_and_send_speed_to_arduino,
-                user_data=user_data_dict, parent=send_group)
+                user_data=self.pump_settings, parent=send_group)
             dpg.add_button(tag="sendSpeedBtn15ms", label="Set Pumps to 1.5 m/s",
                 callback=self.set_ms_15_and_send_speed_to_arduino,
-                user_data=user_data_dict, parent=send_group)
+                user_data=self.pump_settings, parent=send_group)
             dpg.add_button(tag="sendSpeedBtn20ms", label="Set Pumps to 2 m/s",
                 callback=self.set_ms_20_and_send_speed_to_arduino,
-                user_data=user_data_dict, parent=send_group)
+                user_data=self.pump_settings, parent=send_group)
             dpg.add_button(tag="sendSet0", label="Go Back to Zero",
                 callback=self.set_0_and_send_speed_to_arduino,
-                user_data=user_data_dict, parent=send_group)
+                user_data=self.pump_settings, parent=send_group)
 
         width, height, channels, data = dpg.load_image("sarcura.png") 
         with dpg.texture_registry():
@@ -294,12 +296,14 @@ class serial_ui():
         print(f"user data type: {type(dpg.get_value(user_data['channel_flow_speed']))}")
         print(f"user data type: {float(dpg.get_value(user_data['channel_flow_speed']))}")
         print(f"user data type: {type(dpg.get_value(user_data['channel_flow_speed']))}")
-
         # dpg.set_value("sendSpeedFloat", float(user_data['channel_flow_speed'])) # if the value is not set but send to function
         # dpg.set_value("sendSpeedFloat", (user_data['channel_flow_speed'])) # if the value is not set but send to function
         # self.channel_m_per_s_1, self.channel_m_per_s_2, self.channel_m_per_s_3, self.channel_m_per_s_4 = dpg.get_value(user_data[0]),dpg.get_value(user_data[1]),dpg.get_value(user_data[2]),dpg.get_value(user_data[3])
         self.channel_m_per_s = float(dpg.get_value(user_data['channel_flow_speed']))
-        self.channel_m_per_s_1, self.channel_m_per_s_2, self.channel_m_per_s_3, self.channel_m_per_s_4 = dpg.get_value(user_data['userSpeedTag1']),dpg.get_value(user_data['userSpeedTag2']),dpg.get_value(user_data['userSpeedTag3']),dpg.get_value(user_data['userSpeedTag4'])
+        self.channel_m_per_s_1 = dpg.get_value(user_data['userSpeedTag1'])
+        self.channel_m_per_s_2 = dpg.get_value(user_data['userSpeedTag2'])
+        self.channel_m_per_s_3 = dpg.get_value(user_data['userSpeedTag3'])
+        self.channel_m_per_s_4 = dpg.get_value(user_data['userSpeedTag4'])
         self.syringe_diameter_1 = float(dpg.get_value(user_data['syringe_area_1']))
         self.syringe_diameter_2 = float(dpg.get_value(user_data['syringe_area_2']))
         self.syringe_diameter_3 = float(dpg.get_value(user_data['syringe_area_3']))
@@ -340,15 +344,31 @@ class serial_ui():
         self.my_serial.send_to_arduino(data_list)
 
     def set_ms_05_and_send_speed_to_arduino(self, sender, app_data, user_data):
+        self.position_1 = self.sw_endstop
+        self.position_2 = self.sw_endstop
+        self.position_3 = self.sw_endstop
+        self.position_4 = self.sw_endstop
         dpg.set_value("sendSpeedFloat", float(0.5))
         self.send_speed_to_arduino(self, app_data, user_data)
     def set_ms_10_and_send_speed_to_arduino(self, sender, app_data, user_data):
+        self.position_1 = self.sw_endstop
+        self.position_2 = self.sw_endstop
+        self.position_3 = self.sw_endstop
+        self.position_4 = self.sw_endstop
         dpg.set_value("sendSpeedFloat", float(1))
         self.send_speed_to_arduino(self, app_data, user_data)
     def set_ms_15_and_send_speed_to_arduino(self, sender, app_data, user_data):
+        self.position_1 = self.sw_endstop
+        self.position_2 = self.sw_endstop
+        self.position_3 = self.sw_endstop
+        self.position_4 = self.sw_endstop
         dpg.set_value("sendSpeedFloat", float(1.5))
         self.send_speed_to_arduino(self, app_data, user_data)
     def set_ms_20_and_send_speed_to_arduino(self, sender, app_data, user_data):
+        self.position_1 = self.sw_endstop
+        self.position_2 = self.sw_endstop
+        self.position_3 = self.sw_endstop
+        self.position_4 = self.sw_endstop
         dpg.set_value("sendSpeedFloat", float(2))
         self.send_speed_to_arduino(self, app_data, user_data)
         
@@ -357,10 +377,14 @@ class serial_ui():
         self.position_2 = 0
         self.position_3 = 0
         self.position_4 = 0
-        self.stepspeed_1 =  10000 # the GUI variables are unchanged, to avoid damage after starting the pumps again
-        self.stepspeed_2 =  10000
-        self.stepspeed_3 =  10000
-        self.stepspeed_4 =  10000
+        dpg.set_value("sendSpeedFloat", float(5))
+        # print(user_data['channel_flow_speed'])
+        # user_data.update({'channel_flow_speed': 10})
+        # print(user_data['channel_flow_speed'])
+        # self.stepspeed_1 = 20000 # the GUI variables are unchanged, to avoid damage after starting the pumps again
+        # self.stepspeed_2 = 20000 # does not work!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # self.stepspeed_3 = 20000
+        # self.stepspeed_4 = 20000
         self.send_speed_to_arduino(self, app_data, user_data)
 
 
