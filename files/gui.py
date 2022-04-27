@@ -1,3 +1,4 @@
+from types import NoneType
 import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
 from arduino import Arduino
@@ -26,12 +27,14 @@ class serial_ui():
         self.stepspeed_2 = 0
         self.stepspeed_3 = 0
         self.stepspeed_4 = 0
+        self.max_speed = 15000
         self.position_1 = 100000
         self.position_2 = 100000
         self.position_3 = 100000
         self.position_4 = 100000
         self.sw_endstop = 1000000
-        self.motor_speed()
+        self.motor0_direction, self.motor1_direction, self.motor2_direction, self.motor3_direction = 0, 0, 0, 0
+        self.motor0_enable, self.motor1_enable, self.motor2_enable, self.motor3_enable = 0, 0, 0, 0 # enable on low = 0
         self.my_serial = Arduino(findusbport_hwid="16C0:0483")
         # self.update_ports_callback()
         # self.my_serial.hwid =  # should be changed by dropdown to search teensy, ardunio..
@@ -72,12 +75,16 @@ class serial_ui():
             dpg.set_exit_callback(self.exit_callback)
         self.dpg_cleanup()
 
-    def motor_speed(self):
+    def calculate_motors(self):
         # the channel speeds are multiplied with the fractional value per channel
-        stepspeed1 = calculate_stepspeed(self.channel_m_per_s_1*self.channel_m_per_s, self.syringe_diameter_1, self.channel_area_sqmm_1)
-        stepspeed2 = calculate_stepspeed(self.channel_m_per_s_2*self.channel_m_per_s, self.syringe_diameter_2, self.channel_area_sqmm_2)
-        stepspeed3 = calculate_stepspeed(self.channel_m_per_s_3*self.channel_m_per_s, self.syringe_diameter_3, self.channel_area_sqmm_3)
-        stepspeed4 = calculate_stepspeed(self.channel_m_per_s_4*self.channel_m_per_s, self.syringe_diameter_4, self.channel_area_sqmm_4)
+        # print((self.syringe_diameter_1))
+        # print(float(self.syringe_diameter_1))        
+        # print((self.stepspeed_1))
+        # print(type(self.stepspeed_1))
+        stepspeed1 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_1))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm_1)))
+        stepspeed2 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_2))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm_2)))
+        stepspeed3 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_3))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm_3)))
+        stepspeed4 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_4))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm_4)))
         
         self.stepspeed_1 =  int(round(stepspeed1))
         self.stepspeed_2 =  int(round(stepspeed2))
@@ -109,104 +116,66 @@ class serial_ui():
                 
                 # dpg.add_image(texture_tag="sarcura", value="sarcura.svg")
             with dpg.group() as inp_values_group:
-                channel_flow_speed = dpg.add_input_float(tag="sendSpeedFloat",
+                self.channel_m_per_s = dpg.add_input_float(tag="channel_flow_speed",
                         default_value=1, max_value=3, width=180,
                         parent=inp_values_group)
-                user_msg1 = dpg.add_input_float(tag="sendSpeedFloat1",
+                self.channel_m_per_s_1 = dpg.add_input_float(tag="flow_speed_pump_1",
                         default_value=1/4, max_value=3, width=180,
                         parent=inp_values_group)
-                user_msg2 = dpg.add_input_float(tag="sendSpeedFloat2",
+                self.channel_m_per_s_2 = dpg.add_input_float(tag="flow_speed_pump_2",
                         default_value=1/4, max_value=3, width=180,
                         parent=inp_values_group)
-                user_msg3 = dpg.add_input_float(tag="sendSpeedFloat3",
+                self.channel_m_per_s_3 = dpg.add_input_float(tag="flow_speed_pump_3",
                         default_value=1/4, max_value=3, width=180,
                         parent=inp_values_group)
-                user_msg4 = dpg.add_input_float(tag="sendSpeedFloat4",
+                self.channel_m_per_s_4 = dpg.add_input_float(tag="flow_speed_pump_4",
                         default_value=1/4, max_value=3, width=180,
                         parent=inp_values_group)
-                channel_area_sqmm_1 = dpg.add_input_float(tag="channel_area_sqmm_1",
+                self.channel_area_sqmm_1 = dpg.add_input_float(tag="channel_area_sqmm_1",
                         default_value=0.003, max_value=100, width=180,
                         parent=inp_values_group)
-                channel_area_sqmm_2 = dpg.add_input_float(tag="channel_area_sqmm_2",
+                self.channel_area_sqmm_2 = dpg.add_input_float(tag="channel_area_sqmm_2",
                         default_value=0.003, max_value=100, width=180,
                         parent=inp_values_group)
-                channel_area_sqmm_3 = dpg.add_input_float(tag="channel_area_sqmm_3",
+                self.channel_area_sqmm_3 = dpg.add_input_float(tag="channel_area_sqmm_3",
                         default_value=0.003, max_value=100, width=180,
                         parent=inp_values_group)
-                channel_area_sqmm_4 = dpg.add_input_float(tag="channel_area_sqmm_4",
+                self.channel_area_sqmm_4 = dpg.add_input_float(tag="channel_area_sqmm_4",
                         default_value=0.003, max_value=100, width=180,
                         parent=inp_values_group)
 
-                # self.syringe_diameter_1 = 12.08
-                # self.channel_area_sqmm_1 = 0.03*0.1
-                # self.syringe_diameter_2 = 12.08
-                # self.channel_area_sqmm_2 = 0.03*0.1
-                # self.syringe_diameter_3 = 12.08
-                # self.channel_area_sqmm_3 = 0.03*0.1
-                # self.syringe_diameter_4 = 12.08
-                # self.channel_area_sqmm_4 = 0.03*0.1
             with dpg.group(horizontal=True) as syringe_values_group:
-                syringe_areas = [4.78, 8.66, 12.06, 14.5, 19.13, 21.7, 26.7] # BD plastic
+                syringe_diameters = [4.78, 8.66, 12.06, 14.5, 19.13, 21.7, 26.7] # BD plastic
                 with dpg.group():
                     dpg.add_text(default_value="syringe 1 Ø [mm]")
-                    syringearea_1 = dpg.add_listbox(syringe_areas, tag="__listSyringes1", width=80, num_items=7) 
+                    self.syringe_diameter_1 = dpg.add_listbox(syringe_diameters, tag="syringe_dia_1", width=80, num_items=7)
                 with dpg.group():
                     dpg.add_text(default_value="syringe 2 Ø [mm]")
-                    syringearea_2 = dpg.add_listbox(syringe_areas, tag="__listSyringes2", width=80, num_items=7) 
+                    self.syringe_diameter_2 = dpg.add_listbox(syringe_diameters, tag="syringe_dia_2", width=80, num_items=7)
                 with dpg.group():
                     dpg.add_text(default_value="syringe 3 Ø [mm]")
-                    syringearea_3 = dpg.add_listbox(syringe_areas, tag="__listSyringes3", width=80, num_items=7) 
+                    self.syringe_diameter_3 = dpg.add_listbox(syringe_diameters, tag="syringe_dia_3", width=80, num_items=7)
                 with dpg.group():
                     dpg.add_text(default_value="syringe 4 Ø [mm]")
-                    syringearea_4 = dpg.add_listbox(syringe_areas, tag="__listSyringes4", width=80, num_items=7)
-
-            # self.channel_volumetric_flow_4 = self.channel_m_per_s_4*self.channel_area_sqmm_4
-            # print(self.channel_volumetric_flow_4)
-            # print(type(self.channel_volumetric_flow_4))
-
-            # with dpg.group() as button_group:
-                # dpg.add_button(tag="sendSpeedBtn1", label="Set Pump 1",
-                #     callback=self.send_speed_to_arduino,
-                #     user_data={'userSpeedTag1': user_msg1}, parent=button_group)
-                # dpg.add_button(tag="sendSpeedBtn2", label="Set Pump 2",
-                #     callback=self.send_speed_to_arduino,
-                #     user_data={'userSpeedTag2': user_msg2}, parent=button_group)
-                # dpg.add_button(tag="sendSpeedBtn3", label="Set Pump 3",
-                #     callback=self.send_speed_to_arduino,
-                #     user_data={'userSpeedTag3': user_msg3}, parent=button_group)
-                # dpg.add_button(tag="sendSpeedBtn4", label="Set Pump 4",
-                #     callback=self.send_speed_to_arduino,
-                #     user_data={'userSpeedTag4': user_msg4}, parent=button_group)
+                    self.syringe_diameter_4 = dpg.add_listbox(syringe_diameters, tag="syringe_dia_4", width=80, num_items=7)
 
         dpg.add_separator()
 
         with dpg.group() as send_group:
-            self.pump_settings = {'channel_flow_speed': channel_flow_speed,
-                    'userSpeedTag1': user_msg1, 'userSpeedTag2': user_msg2,
-                    'userSpeedTag3': user_msg3,'userSpeedTag4': user_msg4,
-                    'channel_area_sqmm_1': channel_area_sqmm_1, 'channel_area_sqmm_2': channel_area_sqmm_2, 
-                    'channel_area_sqmm_3': channel_area_sqmm_3, 'channel_area_sqmm_4': channel_area_sqmm_4, 
-                    'syringe_area_1' : syringearea_1, 'syringe_area_2' : syringearea_2, 
-                    'syringe_area_3' : syringearea_3, 'syringe_area_4' : syringearea_4, 
-                    }
             dpg.add_button(tag="sendSpeedBtn", label="Start Pumps",
-                callback=self.send_speed_to_arduino,
-                user_data=self.pump_settings, parent=send_group)
-            dpg.add_button(tag="sendSpeedBtn05ms", label="Set Pumps to 0.5 m/s",
-                callback=self.set_ms_05_and_send_speed_to_arduino,
-                user_data=self.pump_settings, parent=send_group)
-            dpg.add_button(tag="sendSpeedBtn10ms", label="Set Pumps to 1 m/s",
-                callback=self.set_ms_10_and_send_speed_to_arduino,
-                user_data=self.pump_settings, parent=send_group)
-            dpg.add_button(tag="sendSpeedBtn15ms", label="Set Pumps to 1.5 m/s",
-                callback=self.set_ms_15_and_send_speed_to_arduino,
-                user_data=self.pump_settings, parent=send_group)
-            dpg.add_button(tag="sendSpeedBtn20ms", label="Set Pumps to 2 m/s",
-                callback=self.set_ms_20_and_send_speed_to_arduino,
-                user_data=self.pump_settings, parent=send_group)
-            dpg.add_button(tag="sendSet0", label="Go Back to Zero",
-                callback=self.set_0_and_send_speed_to_arduino,
-                user_data=self.pump_settings, parent=send_group)
+                callback=self.send_speed_to_arduino, parent=send_group)
+            dpg.add_button(tag="sendSpeedBtn05ms", user_data={"speed": 0.5}, label="Set Pumps to 0.5 m/s",
+                callback=self.send_speed_to_arduino, parent=send_group)
+            dpg.add_button(tag="sendSpeedBtn10ms", user_data={"speed": 1.0}, label="Set Pumps to 1 m/s",
+                callback=self.send_speed_to_arduino, parent=send_group)
+            dpg.add_button(tag="sendSpeedBtn15ms", user_data={"speed": 1.5}, label="Set Pumps to 1.5 m/s",
+                callback=self.send_speed_to_arduino, parent=send_group)
+            dpg.add_button(tag="sendSpeedBtn20ms", user_data={"speed": 2}, label="Set Pumps to 2 m/s",
+                callback=self.send_speed_to_arduino, parent=send_group)
+            dpg.add_button(tag="sendSet0", user_data={"go_to_endstops" : True}, label="Go Back to Zero",
+                callback=self.send_speed_to_arduino, parent=send_group)
+            dpg.add_button(tag="sendStop", user_data={"set_speed_zero" : True}, label="Stop Motors",
+                callback=self.send_speed_to_arduino, parent=send_group)
 
         width, height, channels, data = dpg.load_image("sarcura.png") 
         with dpg.texture_registry():
@@ -289,105 +258,38 @@ class serial_ui():
         dpg.stop_dearpygui()
 
     def send_speed_to_arduino(self, sender, app_data, user_data):
-        print(f"user data: {user_data}")
-        print(f"user data: {user_data['channel_flow_speed']}")
-        print(f"user data: {type(user_data['channel_flow_speed'])}")
-        print(f"user data: {dpg.get_value(user_data['channel_flow_speed'])}")
-        print(f"user data type: {type(dpg.get_value(user_data['channel_flow_speed']))}")
-        print(f"user data type: {float(dpg.get_value(user_data['channel_flow_speed']))}")
-        print(f"user data type: {type(dpg.get_value(user_data['channel_flow_speed']))}")
-        # dpg.set_value("sendSpeedFloat", float(user_data['channel_flow_speed'])) # if the value is not set but send to function
-        # dpg.set_value("sendSpeedFloat", (user_data['channel_flow_speed'])) # if the value is not set but send to function
-        # self.channel_m_per_s_1, self.channel_m_per_s_2, self.channel_m_per_s_3, self.channel_m_per_s_4 = dpg.get_value(user_data[0]),dpg.get_value(user_data[1]),dpg.get_value(user_data[2]),dpg.get_value(user_data[3])
-        self.channel_m_per_s = float(dpg.get_value(user_data['channel_flow_speed']))
-        self.channel_m_per_s_1 = dpg.get_value(user_data['userSpeedTag1'])
-        self.channel_m_per_s_2 = dpg.get_value(user_data['userSpeedTag2'])
-        self.channel_m_per_s_3 = dpg.get_value(user_data['userSpeedTag3'])
-        self.channel_m_per_s_4 = dpg.get_value(user_data['userSpeedTag4'])
-        self.syringe_diameter_1 = float(dpg.get_value(user_data['syringe_area_1']))
-        self.syringe_diameter_2 = float(dpg.get_value(user_data['syringe_area_2']))
-        self.syringe_diameter_3 = float(dpg.get_value(user_data['syringe_area_3']))
-        self.syringe_diameter_4 = float(dpg.get_value(user_data['syringe_area_4']))
-        self.channel_area_sqmm_1 = float(dpg.get_value(user_data['channel_area_sqmm_1']))
-        self.channel_area_sqmm_2 = float(dpg.get_value(user_data['channel_area_sqmm_2']))
-        self.channel_area_sqmm_3 = float(dpg.get_value(user_data['channel_area_sqmm_3']))
-        self.channel_area_sqmm_4 = float(dpg.get_value(user_data['channel_area_sqmm_4']))
+        self.position_1, self.position_2, self.position_3, self.position_4 = self.sw_endstop, self.sw_endstop, self.sw_endstop, self.sw_endstop
 
-        # self.channel_m_per_s_1 = dpg.get_value(user_data['userSpeedTag1'])
-        # self.channel_m_per_s_2 = dpg.get_value(user_data['userSpeedTag2'])
-        # self.channel_m_per_s_3 = dpg.get_value(user_data['userSpeedTag3'])
-        # self.channel_m_per_s_4 = dpg.get_value(user_data['userSpeedTag4'])
-        
-        self.motor_speed()
-        motor0_enable = 1
-        motor0_direction = 0
-        motor1_enable = 1
-        motor1_direction = 0
-        motor2_enable = 1
-        motor2_direction = 0
-        motor3_enable = 1
-        motor3_direction = 0
-        data_list = [motor0_enable, motor0_direction, self.position_1, self.stepspeed_1, 
-            motor1_enable, motor1_direction, self.position_2, self.stepspeed_2, 
-            motor2_enable, motor2_direction, self.position_3, self.stepspeed_3,
-            motor3_enable, motor3_direction, self.position_4, self.stepspeed_4]
-
-            # motor1_enable, motor1_direction, dpg.get_value(user_data['userSpeedTag1']), dpg.get_value(user_data['userSpeedTag1']),
-            # motor2_enable, motor2_direction, dpg.get_value(user_data['userSpeedTag2']), dpg.get_value(user_data['userSpeedTag2']),
-            # motor3_enable, motor3_direction, dpg.get_value(user_data['userSpeedTag3']), dpg.get_value(user_data['userSpeedTag3'])]
-
-        # data_list = [motor0_enable, motor0_direction, dpg.get_value(item=slider_position_4int)[0], dpg.get_value(item=slider_speed_4int)[0],
-        #     motor1_enable, motor1_direction, dpg.get_value(item=slider_position_4int)[1], dpg.get_value(item=slider_speed_4int)[1],
-        #     motor2_enable, motor2_direction, dpg.get_value(item=slider_position_4int)[2], dpg.get_value(item=slider_speed_4int)[2],
-        #     motor3_enable, motor3_direction, dpg.get_value(item=slider_position_4int)[3], dpg.get_value(item=slider_speed_4int)[3]]
+        if user_data is None:
+            self.calculate_motors()
+            data_list = [self.motor0_enable, self.motor0_direction, self.position_1, self.stepspeed_1, 
+                self.motor1_enable, self.motor1_direction, self.position_2, self.stepspeed_2, 
+                self.motor2_enable, self.motor2_direction, self.position_3, self.stepspeed_3,
+                self.motor3_enable, self.motor3_direction, self.position_4, self.stepspeed_4]
+        else:
+            if "speed" in user_data:
+                dpg.set_value("channel_flow_speed", user_data["speed"])
+                self.calculate_motors()
+                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, self.stepspeed_1, 
+                    self.motor1_enable, self.motor1_direction, self.position_2, self.stepspeed_2, 
+                    self.motor2_enable, self.motor2_direction, self.position_3, self.stepspeed_3,
+                    self.motor3_enable, self.motor3_direction, self.position_4, self.stepspeed_4]
+            if "go_to_endstops" in user_data and user_data["go_to_endstops"] == True:
+                self.position_1, self.position_2, self.position_3, self.position_4 = 0, 0, 0, 0
+                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, self.max_speed, 
+                    self.motor1_enable, self.motor1_direction, self.position_2, self.max_speed, 
+                    self.motor2_enable, self.motor2_direction, self.position_3, self.max_speed,
+                    self.motor3_enable, self.motor3_direction, self.position_4, self.max_speed]
+            if "set_speed_zero" in user_data and user_data["set_speed_zero"] == True:
+                # disable on high, but not connected in hardware (?!)
+                # self.motor0_enable, self.motor1_enable, self.motor2_enable, self.motor3_enable = 1, 1, 1, 1
+                self.position_1, self.position_2, self.position_3, self.position_4 = 0, 0, 0, 0
+                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
+                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
+                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
+                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
 
         self.my_serial.send_to_arduino(data_list)
-
-    def set_ms_05_and_send_speed_to_arduino(self, sender, app_data, user_data):
-        self.position_1 = self.sw_endstop
-        self.position_2 = self.sw_endstop
-        self.position_3 = self.sw_endstop
-        self.position_4 = self.sw_endstop
-        dpg.set_value("sendSpeedFloat", float(0.5))
-        self.send_speed_to_arduino(self, app_data, user_data)
-    def set_ms_10_and_send_speed_to_arduino(self, sender, app_data, user_data):
-        self.position_1 = self.sw_endstop
-        self.position_2 = self.sw_endstop
-        self.position_3 = self.sw_endstop
-        self.position_4 = self.sw_endstop
-        dpg.set_value("sendSpeedFloat", float(1))
-        self.send_speed_to_arduino(self, app_data, user_data)
-    def set_ms_15_and_send_speed_to_arduino(self, sender, app_data, user_data):
-        self.position_1 = self.sw_endstop
-        self.position_2 = self.sw_endstop
-        self.position_3 = self.sw_endstop
-        self.position_4 = self.sw_endstop
-        dpg.set_value("sendSpeedFloat", float(1.5))
-        self.send_speed_to_arduino(self, app_data, user_data)
-    def set_ms_20_and_send_speed_to_arduino(self, sender, app_data, user_data):
-        self.position_1 = self.sw_endstop
-        self.position_2 = self.sw_endstop
-        self.position_3 = self.sw_endstop
-        self.position_4 = self.sw_endstop
-        dpg.set_value("sendSpeedFloat", float(2))
-        self.send_speed_to_arduino(self, app_data, user_data)
-        
-    def set_0_and_send_speed_to_arduino(self, sender, app_data, user_data):
-        self.position_1 = 0
-        self.position_2 = 0
-        self.position_3 = 0
-        self.position_4 = 0
-        dpg.set_value("sendSpeedFloat", float(5))
-        # print(user_data['channel_flow_speed'])
-        # user_data.update({'channel_flow_speed': 10})
-        # print(user_data['channel_flow_speed'])
-        # self.stepspeed_1 = 20000 # the GUI variables are unchanged, to avoid damage after starting the pumps again
-        # self.stepspeed_2 = 20000 # does not work!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # self.stepspeed_3 = 20000
-        # self.stepspeed_4 = 20000
-        self.send_speed_to_arduino(self, app_data, user_data)
-
-
 
     # def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
     #     """
@@ -415,7 +317,6 @@ class serial_ui():
     #         self.log_msg(msg_to_send, serial_ui.CLIENT_THEME)
     #         print(f"Sent |{msg_to_send}| to {self.SELECTED_DEVICE}")
     #         dpg.configure_item("usrMsgTxt", default_value="")
-
 
     def log_msg(self, message, custom_theme):
         new_log = dpg.add_text(message, parent=self.filter_id, filter_key=message)
