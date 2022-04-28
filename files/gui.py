@@ -103,8 +103,7 @@ class serial_ui():
 
     def save_state(self, sender, app_data, user_data):
         file_name = "pump_settings.yaml"
-        print(file_name, user_data)
-
+        # due to floating point arithmetics, some values may appear to be "wrong"
         speed_position = [
             float(dpg.get_value(self.channel_m_per_s)),
             float(dpg.get_value(self.channel_m_per_s_1)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm_1)),
@@ -113,13 +112,6 @@ class serial_ui():
             float(dpg.get_value(self.channel_m_per_s_4)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm_4)),
         ]
         print(speed_position)
-
-        # with open(file_name) as f:
-        #     doc = yaml.safe_load(f)
-        # # doc = dpg.get_item_user_data("load_data", user_data=doc)
-        #     print(doc)
-        # if not doc:
-        # print("no data stored")
         with open(file_name, 'w+') as f:
             yaml.safe_dump(speed_position, f, default_flow_style=False)
 
