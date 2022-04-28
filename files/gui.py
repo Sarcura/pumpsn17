@@ -1,4 +1,3 @@
-from types import NoneType
 import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
 from arduino import Arduino
