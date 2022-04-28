@@ -3,6 +3,7 @@ import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
 from arduino import Arduino
 from flowspeed_motorspeed import calculate_stepspeed
+import yaml
 
 class serial_ui():
     CLIENT_THEME = None
@@ -100,6 +101,43 @@ class serial_ui():
         child_logger_id = dpg.add_child_window(tag="logger", width=870, height=340)
         self.filter_id = dpg.add_filter_set(parent=child_logger_id)
 
+    def save_state(self, sender, app_data, user_data):
+        file_name = "pump_settings.yaml"
+        print(file_name, user_data)
+
+        speed_position = [
+            float(dpg.get_value(self.channel_m_per_s)),
+            float(dpg.get_value(self.channel_m_per_s_1)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm_1)),
+            float(dpg.get_value(self.channel_m_per_s_2)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm_2)),
+            float(dpg.get_value(self.channel_m_per_s_3)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm_3)),
+            float(dpg.get_value(self.channel_m_per_s_4)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm_4)),
+        ]
+        print(speed_position)
+
+        # with open(file_name) as f:
+        #     doc = yaml.safe_load(f)
+        # # doc = dpg.get_item_user_data("load_data", user_data=doc)
+        #     print(doc)
+        # if not doc:
+        # print("no data stored")
+        with open(file_name, 'w+') as f:
+            yaml.safe_dump(speed_position, f, default_flow_style=False)
+
+    def load_state(self, sender, app_data, user_data):
+        file_name = "pump_settings.yaml"
+        with open(file_name) as f:
+            doc = yaml.safe_load(f)
+            print("loaded data:")
+            print(doc)
+            speed_position = doc
+        # dpg.set_item_user_data("load_data", user_data=doc) 
+        
+        dpg.set_value(self.channel_m_per_s, speed_position[0])
+        dpg.set_value(self.channel_m_per_s_1, speed_position[1]), dpg.set_value(self.syringe_diameter_1, speed_position[2]), dpg.set_value(self.channel_area_sqmm_1, speed_position[3]),
+        dpg.set_value(self.channel_m_per_s_2, speed_position[4]), dpg.set_value(self.syringe_diameter_2, speed_position[5]), dpg.set_value(self.channel_area_sqmm_2, speed_position[6]),
+        dpg.set_value(self.channel_m_per_s_3, speed_position[7]), dpg.set_value(self.syringe_diameter_3, speed_position[8]), dpg.set_value(self.channel_area_sqmm_3, speed_position[9]),
+        dpg.set_value(self.channel_m_per_s_4, speed_position[10]), dpg.set_value(self.syringe_diameter_4, speed_position[11]), dpg.set_value(self.channel_area_sqmm_4, speed_position[12])
+
     def create_send_speed(self):
         with dpg.group(horizontal=True):
             with dpg.group() as text_group:
@@ -112,7 +150,7 @@ class serial_ui():
                 dpg.add_text(default_value="Channel 2 [mm²]", parent=text_group)
                 dpg.add_text(default_value="Channel 3 [mm²]", parent=text_group)
                 dpg.add_text(default_value="Channel 4 [mm²]", parent=text_group)
-                dpg.add_text(default_value="Please set Pump 1-4 to match 100 %", parent=text_group)
+                dpg.add_text(default_value="Please set Pump 1-4 to match 100% = 1.0", parent=text_group)
                 
                 # dpg.add_image(texture_tag="sarcura", value="sarcura.svg")
             with dpg.group() as inp_values_group:
@@ -143,6 +181,9 @@ class serial_ui():
                 self.channel_area_sqmm_4 = dpg.add_input_float(tag="channel_area_sqmm_4",
                         default_value=0.003, max_value=100, width=180,
                         parent=inp_values_group)
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Save Data", callback=self.save_state, tag="save_data")
+                    dpg.add_button(label="Load Data", callback=self.load_state, tag="load_data")
 
             with dpg.group(horizontal=True) as syringe_values_group:
                 syringe_diameters = [4.78, 8.66, 12.06, 14.5, 19.13, 21.7, 26.7] # BD plastic
@@ -161,7 +202,7 @@ class serial_ui():
 
         dpg.add_separator()
 
-        with dpg.group() as send_group:
+        with dpg.group(horizontal=True) as send_group:
             dpg.add_button(tag="sendSpeedBtn", label="Start Pumps",
                 callback=self.send_speed_to_arduino, parent=send_group)
             dpg.add_button(tag="sendSpeedBtn05ms", user_data={"speed": 0.5}, label="Set Pumps to 0.5 m/s",
@@ -174,7 +215,7 @@ class serial_ui():
                 callback=self.send_speed_to_arduino, parent=send_group)
             dpg.add_button(tag="sendSet0", user_data={"go_to_endstops" : True}, label="Go Back to Zero",
                 callback=self.send_speed_to_arduino, parent=send_group)
-            dpg.add_button(tag="sendStop", user_data={"set_speed_zero" : True}, label="Stop Motors",
+            dpg.add_button(tag="sendStop", user_data={"set_speed_zero" : True}, label="Stop Pumps",
                 callback=self.send_speed_to_arduino, parent=send_group)
 
         width, height, channels, data = dpg.load_image("sarcura.png") 
@@ -229,7 +270,7 @@ class serial_ui():
     def dpg_setup(self):
         dpg.create_context()
         windowWidth  = 1100
-        windowHeight = 450
+        windowHeight = 335
         dpg.create_viewport(title='Serial GUI', width=windowWidth, height=windowHeight)
         dpg.setup_dearpygui()
 
