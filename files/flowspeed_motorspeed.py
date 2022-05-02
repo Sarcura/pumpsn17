@@ -2,20 +2,20 @@ import math
 
 def calcuate_sorting_parameters(channel_m_per_s = 1, channel_area_mm2 = 0.003,
         cell_concentration_per_ml = 1e06, cell_volume_ml = 10,
-        sorting_speed = 2000, max_sorting_speed = 5000, maximum_time = 4):
+        sorting_speed = 2000, max_sorting_speed = 5000, maximum_sorting_time = 4):
 
-    channel_m3_per_s = float(channel_m_per_s)*float(channel_area_mm2)/1000000
-    channel_l_per_s = channel_m3_per_s*1000
-    channel_µl_per_s = channel_l_per_s*1000000
+    channel_m3_per_s = channel_m_per_s*(channel_area_mm2*1e-06)
+    channel_l_per_s = channel_m3_per_s*1e03
+    channel_µl_per_s = channel_l_per_s*1e06
     print(f"channel volume: [µl/min]: {channel_µl_per_s:.2f}")
-    cell_concentration_per_µl = cell_concentration_per_ml/1000
+    cell_concentration_per_µl = channel_m_per_s*cell_concentration_per_ml*1e-03 # channel_m_per_s needs to be included, smaller fraction = less cells/µl
     cell_per_s = cell_concentration_per_µl*channel_µl_per_s # cell_per_s is equal to the needed (!) sorting frequency
     total_cells = cell_concentration_per_ml*cell_volume_ml
 
     # according to selected sorting speed, calculate if more medium is needed:
     # it could also do the same for max conc max speed
-    max_cell_concentration_per_ml = sorting_speed/channel_µl_per_s*1000 # needed for ml
-    max_cell_concentration_per_ml_max_speed = max_sorting_speed/channel_µl_per_s*1000 # needed for ml
+    max_cell_concentration_per_ml = sorting_speed/channel_µl_per_s*1e03 # needed for ml
+    max_cell_concentration_per_ml_max_speed = max_sorting_speed/channel_µl_per_s*1e03 # needed for ml
     print(f"The max cell concentration per ml for a sorting speed of {sorting_speed} Hz is: {max_cell_concentration_per_ml:.2e} cells per ml")
     print(f"The max cell concentration per ml for a sorting speed of {max_sorting_speed} Hz is: {max_cell_concentration_per_ml_max_speed:.2e} cells per ml")
     sorter_cap_factor = cell_concentration_per_ml/max_cell_concentration_per_ml
@@ -34,14 +34,14 @@ equaling to {total_cells:.2e} total cells.")
     cell_per_s = cell_concentration_per_µl/sorter_cap_factor*channel_µl_per_s # calculated anew with the new concentration -> is now the selected
 
     print(f"All cells passing by in a speed of {cell_per_s:.1f} [cells/s] and will be sorted by {sorting_speed} Hz. ✓ ")
-    total_sorting_time = total_cells/sorting_speed
-    print(f"Sorting will be completed in {round(total_sorting_time/3600, 1)} hours.")
-    sorting_percentage = maximum_time/(total_sorting_time/3600)*100# for 4 hours maximum time
-    if total_sorting_time/3600 > maximum_time:
-        print(f"Complete sample sorting cannot be completed under {maximum_time} hours.")
+    total_sorting_time = total_cells/sorting_speed/3600 # calculate from seconds to hours
+    print(f"Sorting will be completed in {round(total_sorting_time, 2)} hours.")
+    sorting_percentage = maximum_sorting_time/(total_sorting_time)*100# for 4 hours maximum time
+    if total_sorting_time > maximum_sorting_time:
+        print(f"Complete sample sorting cannot be completed under {maximum_sorting_time} hours.")
         print(f"{sorting_percentage:.1f}% of the sample could be sorted in time.")
 
-    return round(channel_µl_per_s), round(cell_per_s), round(cell_volume_additional_ml)
+    return round(channel_µl_per_s), round(cell_per_s), round(total_sorting_time, 2), round(cell_volume_additional_ml)
     # return {"Cells per second":round(cell_per_s), "Additional cell volume needed":round(cell_volume_additional_ml),
     #     "channel volume": round(channel_µl_per_s)}
 
@@ -78,6 +78,6 @@ def calculate_stepspeed(channel_m_per_s = 1, syringe_diameter = 12.08, channel_a
     return stepspeed
     
 if __name__ == '__main__':
-    print(calculate_stepspeed(channel_m_per_s= 1, syringe_diameter = 12.08, channel_area_mm2 = 0.03*0.1))
-    print(calcuate_sorting_parameters(channel_m_per_s = 1/3, channel_area_mm2 = 0.03*0.1, cell_concentration_per_ml = 1.6e6,
-        cell_volume_ml= 40, sorting_speed= 4000, max_sorting_speed=5000, maximum_time = 4))
+    print(calculate_stepspeed(channel_m_per_s= 1/2, syringe_diameter = 12.08, channel_area_mm2 = 0.03*0.1))
+    print(calcuate_sorting_parameters(channel_m_per_s = 1/3, channel_area_mm2 = 0.03*0.1, cell_concentration_per_ml = 3e6,
+        cell_volume_ml= 15, sorting_speed= 5000, max_sorting_speed=5000, maximum_sorting_time = 4))

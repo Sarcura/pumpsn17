@@ -10,6 +10,11 @@ class serial_ui():
 
     def __init__(self):
         # self.my_serial = mySerial()s
+        self.cell_concentration_per_ml = 1e6 # cell concentration in medium
+        self.cell_volume_ml = 10 # amount of cell medium
+        self.sorting_speed= 4000 #Hz
+        self.max_sorting_speed= 5000 # Hz, heater capability
+        self.maximum_sorting_time = 4 # Maximum amount of hours a full sorting is allowed to take
         self.channel_m_per_s = 1 # total flow in channel
         self.channel_m_per_s_1 = 1/4 # this is a percentage of the total flow
         self.syringe_diameter_1 = 12.08
@@ -23,6 +28,7 @@ class serial_ui():
         self.channel_m_per_s_4 = 1/4
         self.syringe_diameter_4 = 12.08
         self.channel_area_sqmm_4 = 0.03*0.1
+        self.channel_names = {"Sample": self.channel_m_per_s_1, "Sheath_xy": self.channel_m_per_s_2, "Sheath_z1": self.channel_m_per_s_3, "Sheath_z2": self.channel_m_per_s_4}
         self.stepspeed_1 = 0
         self.stepspeed_2 = 0
         self.stepspeed_3 = 0
