@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
 from arduino import Arduino
-from flowspeed_motorspeed import calculate_stepspeed, calcuate_sorting_parameters
+from flowspeed_motorspeed import calculate_stepspeed, calculate_sorting_parameters
 import yaml
 
 class serial_ui():
@@ -9,26 +9,6 @@ class serial_ui():
     SERVER_THEME = None
 
     def __init__(self):
-        # self.my_serial = mySerial()s
-        self.cell_concentration_per_ml = 1e6 # cell concentration in medium
-        self.cell_volume_ml = 10 # amount of cell medium
-        self.sorting_speed= 4000 #Hz
-        self.max_sorting_speed= 5000 # Hz, heater capability
-        self.maximum_sorting_time = 4 # Maximum amount of hours a full sorting is allowed to take
-        self.channel_m_per_s = 1 # total flow in channel
-        self.channel_m_per_s_1 = 1/4 # this is a percentage of the total flow
-        self.syringe_diameter_1 = 12.08
-        self.channel_area_sqmm_1 = 0.03*0.1
-        self.channel_m_per_s_2 = 1/4
-        self.syringe_diameter_2 = 12.08
-        self.channel_area_sqmm_2 = 0.03*0.1
-        self.channel_m_per_s_3 = 1/4
-        self.syringe_diameter_3 = 12.08
-        self.channel_area_sqmm_3 = 0.03*0.1
-        self.channel_m_per_s_4 = 1/4
-        self.syringe_diameter_4 = 12.08
-        self.channel_area_sqmm_4 = 0.03*0.1
-        self.channel_names = {"Sample": self.channel_m_per_s_1, "Sheath_xy": self.channel_m_per_s_2, "Sheath_z1": self.channel_m_per_s_3, "Sheath_z2": self.channel_m_per_s_4}
         self.stepspeed_1 = 0
         self.stepspeed_2 = 0
         self.stepspeed_3 = 0
@@ -96,6 +76,18 @@ class serial_ui():
         self.stepspeed_2 =  int(round(stepspeed2))
         self.stepspeed_3 =  int(round(stepspeed3))
         self.stepspeed_4 =  int(round(stepspeed4))
+
+    def calculate_sorting(self):
+        # this is now calculated for channel 1 as standard sample channel 
+        print(float(dpg.get_value(self.channel_m_per_s_1)))
+        self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.cell_volume_additional_ml = calculate_sorting_parameters(
+            float(dpg.get_value(self.channel_m_per_s_1)), round(float(dpg.get_value(self.channel_area_sqmm_1)), 5),
+            int(dpg.get_value(self.cell_concentration_per_ml)), float(dpg.get_value(self.cell_volume_ml)),
+            float(dpg.get_value(self.sorting_speed)), float(dpg.get_value(self.max_sorting_speed)), float(dpg.get_value(self.maximum_sorting_time)))
+
+        output = f"Sample speed in channel [µl/s]: {self.channel_µl_per_s}, [Cells/s]: {self.cell_per_s}, Sorting duration [h]: {self.total_sorting_time}, Additionally needed volume [ml]: {self.cell_volume_additional_ml}"
+
+        dpg.set_value("sorting_simulation", output)
 
     def update_ports_callback(self):
         self.my_serial.get_availabile_port_list()
@@ -215,6 +207,52 @@ class serial_ui():
             dpg.add_button(tag="sendStop", user_data={"set_speed_zero" : True}, label="Stop Pumps",
                 callback=self.send_speed_to_arduino, parent=send_group)
 
+        dpg.add_separator()
+
+    def create_calculate(self):
+        with dpg.group(horizontal=True):
+            with dpg.group() as text_group:
+                dpg.add_text(default_value="Cell concentration [ml]", parent=text_group)
+                dpg.add_text(default_value="Cell volume [ml]", parent=text_group)
+                dpg.add_text(default_value="Sorting speed [Hz]", parent=text_group)
+                dpg.add_text(default_value="Maximum sorting speed [Hz]", parent=text_group)
+                dpg.add_text(default_value="Maximum sorting time [h]", parent=text_group)
+                dpg.add_text(default_value="Simulation output: ", parent=text_group)
+
+                # dpg.add_image(texture_tag="sarcura", value="sarcura.svg")
+            with dpg.group() as inp_values_group:
+                self.cell_concentration_per_ml = dpg.add_input_int(tag="cell_concentration_per_ml",
+                        default_value=1000000, step=500000,  width=180,
+                        parent=inp_values_group)
+                self.cell_volume_ml = dpg.add_input_float(tag="cell_volume_ml",
+                        default_value=1, step=1,  max_value=1000, width=180,
+                        parent=inp_values_group)
+                self.sorting_speed = dpg.add_input_int(tag="sorting_speed",
+                        default_value=1000, step=500, width=180,
+                        parent=inp_values_group)
+                self.max_sorting_speed = dpg.add_input_int(tag="max_sorting_speed",
+                        default_value=5000, step=500, width=180,
+                        parent=inp_values_group)
+                self.maximum_sorting_time = dpg.add_input_int(tag="maximum_sorting_time",
+                        default_value=4, step=1,  width=180,
+                        parent=inp_values_group)
+                self.sorting_simulation = dpg.add_input_text(tag="sorting_simulation",
+                        default_value="???", width=830,
+                        parent=inp_values_group)        
+                        
+                # self.cell_concentration_per_ml cell concentration in medium
+                # self.cell_volume_ml amount of cell medium
+                # self.sorting_speed Hz
+                # self.max_sorting_speed Hz, heater capability
+                # self.maximum_sorting_time Maximum amount of hours a full sorting is allowed to take
+
+                # ! self.sorting_simulation = {"Sample": self.channel_m_per_s_1, "Sheath_xy": self.channel_m_per_s_2, "Sheath_z1": self.channel_m_per_s_3, "Sheath_z2": self.channel_m_per_s_4}
+
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Calculate Sorting", callback=self.calculate_sorting, tag="calculate_sorting")
+
+        dpg.add_separator()
+
         width, height, channels, data = dpg.load_image("sarcura.png") 
         with dpg.texture_registry():
             texture_id = dpg.add_static_texture(width, height, data) 
@@ -245,7 +283,6 @@ class serial_ui():
     #                 callback=lambda: dpg.delete_item(self.filter_id,
     #                     children_only=True), parent=button_group)
 
-
     def create_primary_window(self):
         with dpg.window(tag="Primary Window", autosize=True) as self.prime_window:
             with dpg.group(horizontal=True):
@@ -261,6 +298,7 @@ class serial_ui():
                         callback=self.selected_port_callback)
 
             self.create_send_speed()
+            self.create_calculate()
             # self.create_msg_and_filter_columns()
             self.create_logger_window()
 

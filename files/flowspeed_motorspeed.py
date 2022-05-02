@@ -1,7 +1,7 @@
 import math 
 
-def calcuate_sorting_parameters(channel_m_per_s = 1, channel_area_mm2 = 0.003,
-        cell_concentration_per_ml = 1e06, cell_volume_ml = 10,
+def calculate_sorting_parameters(channel_m_per_s = 1.5, channel_area_mm2 = 0.003,
+        cell_concentration_per_ml = 1e06, cell_volume_ml = 10.5,
         sorting_speed = 2000, max_sorting_speed = 5000, maximum_sorting_time = 4):
 
     channel_m3_per_s = channel_m_per_s*(channel_area_mm2*1e-06)
@@ -41,7 +41,7 @@ equaling to {total_cells:.2e} total cells.")
         print(f"Complete sample sorting cannot be completed under {maximum_sorting_time} hours.")
         print(f"{sorting_percentage:.1f}% of the sample could be sorted in time.")
 
-    return round(channel_µl_per_s), round(cell_per_s), round(total_sorting_time, 2), round(cell_volume_additional_ml)
+    return round(channel_µl_per_s), round(cell_per_s), round(total_sorting_time, 2), round(cell_volume_additional_ml, 3)
     # return {"Cells per second":round(cell_per_s), "Additional cell volume needed":round(cell_volume_additional_ml),
     #     "channel volume": round(channel_µl_per_s)}
 
@@ -79,5 +79,5 @@ def calculate_stepspeed(channel_m_per_s = 1, syringe_diameter = 12.08, channel_a
     
 if __name__ == '__main__':
     print(calculate_stepspeed(channel_m_per_s= 1/2, syringe_diameter = 12.08, channel_area_mm2 = 0.03*0.1))
-    print(calcuate_sorting_parameters(channel_m_per_s = 1/3, channel_area_mm2 = 0.03*0.1, cell_concentration_per_ml = 3e6,
-        cell_volume_ml= 15, sorting_speed= 5000, max_sorting_speed=5000, maximum_sorting_time = 4))
+    print(calcuate_sorting_parameters(channel_m_per_s = 1/4, channel_area_mm2 = 0.03*0.1, cell_concentration_per_ml = 1e7,
+        cell_volume_ml= 7, sorting_speed= 5000, max_sorting_speed=5000, maximum_sorting_time = 4))
