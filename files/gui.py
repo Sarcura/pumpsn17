@@ -78,12 +78,16 @@ class serial_ui():
         self.stepspeed_4 =  int(round(stepspeed4))
 
     def calculate_sorting(self):
-        # this is now calculated for channel 1 as standard sample channel 
-        print(float(dpg.get_value(self.channel_m_per_s_1)))
+        # this is now calculated for channel 4 as standard sample channel 
+        
+        # calculate_medium_for_sorting_speed = False
         self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.cell_volume_additional_ml = calculate_sorting_parameters(
-            float(dpg.get_value(self.channel_m_per_s_1)), round(float(dpg.get_value(self.channel_area_sqmm_1)), 5),
+            float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.channel_m_per_s_4)),
+            round(float(dpg.get_value(self.channel_area_sqmm_1)), 5),
             int(dpg.get_value(self.cell_concentration_per_ml)), float(dpg.get_value(self.cell_volume_ml)),
-            float(dpg.get_value(self.sorting_speed)), float(dpg.get_value(self.max_sorting_speed)), float(dpg.get_value(self.maximum_sorting_time)))
+            float(dpg.get_value(self.sorting_speed)), float(dpg.get_value(self.max_sorting_speed)),
+            float(dpg.get_value(self.maximum_sorting_time)), dpg.get_value(item="medium_calculation")
+        )
 
         output = f"Sample speed in channel [µl/s]: {self.channel_µl_per_s}, [Cells/s]: {self.cell_per_s}, Sorting duration [h]: {self.total_sorting_time}, Additionally needed volume [ml]: {self.cell_volume_additional_ml}"
 
@@ -131,10 +135,10 @@ class serial_ui():
         with dpg.group(horizontal=True):
             with dpg.group() as text_group:
                 dpg.add_text(default_value="Channel [m/s]", parent=text_group)
-                dpg.add_text(default_value="Pump 1 [m/s fraction]", parent=text_group)
-                dpg.add_text(default_value="Pump 2 [m/s fraction]", parent=text_group)
-                dpg.add_text(default_value="Pump 3 [m/s fraction]", parent=text_group)
-                dpg.add_text(default_value="Pump 4 [m/s fraction]", parent=text_group)
+                dpg.add_text(default_value="Pump 1 xy sheath [m/s fraction]", parent=text_group)
+                dpg.add_text(default_value="Pump 2 z1 sheath [m/s fraction]", parent=text_group)
+                dpg.add_text(default_value="Pump 3 z2 sheath [m/s fraction]", parent=text_group)
+                dpg.add_text(default_value="Pump 4 sample [m/s fraction]", parent=text_group)
                 dpg.add_text(default_value="Channel 1 [mm²]", parent=text_group)
                 dpg.add_text(default_value="Channel 2 [mm²]", parent=text_group)
                 dpg.add_text(default_value="Channel 3 [mm²]", parent=text_group)
@@ -142,21 +146,22 @@ class serial_ui():
                 dpg.add_text(default_value="Please set Pump 1-4 to match 100% = 1.0", parent=text_group)
                 
                 # dpg.add_image(texture_tag="sarcura", value="sarcura.svg")
+            # 100 µl sheath, 50 µl z1 / 50 µl z2, 20 µl sample = 0.1, 0.45, 0.225, 0.225
             with dpg.group() as inp_values_group:
                 self.channel_m_per_s = dpg.add_input_float(tag="channel_flow_speed",
                         default_value=1, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_m_per_s_1 = dpg.add_input_float(tag="flow_speed_pump_1",
-                        default_value=1/4, max_value=3, width=180,
+                self.channel_m_per_s_1 = dpg.add_input_float(tag="flow_speed_pump_1", # sample
+                        default_value=0.45, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_m_per_s_2 = dpg.add_input_float(tag="flow_speed_pump_2",
-                        default_value=1/4, max_value=3, width=180,
+                self.channel_m_per_s_2 = dpg.add_input_float(tag="flow_speed_pump_2", # xy sheath
+                        default_value=0.225, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_m_per_s_3 = dpg.add_input_float(tag="flow_speed_pump_3",
-                        default_value=1/4, max_value=3, width=180,
+                self.channel_m_per_s_3 = dpg.add_input_float(tag="flow_speed_pump_3", # z1 sheath
+                        default_value=0.225, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_m_per_s_4 = dpg.add_input_float(tag="flow_speed_pump_4",
-                        default_value=1/4, max_value=3, width=180,
+                self.channel_m_per_s_4 = dpg.add_input_float(tag="flow_speed_pump_4", #z2 sheath
+                        default_value=0.1, max_value=3, width=180,
                         parent=inp_values_group)
                 self.channel_area_sqmm_1 = dpg.add_input_float(tag="channel_area_sqmm_1",
                         default_value=0.003, max_value=100, width=180,
@@ -175,19 +180,19 @@ class serial_ui():
                     dpg.add_button(label="Load Data", callback=self.load_state, tag="load_data")
 
             with dpg.group(horizontal=True) as syringe_values_group:
-                syringe_diameters = [4.78, 8.66, 12.06, 14.5, 19.13, 21.7, 26.7] # BD plastic
+                syringe_diameters = [4.65, 8.66, 12.36, 14.5, 19.13, 21.7, 26.7] # BD plastic
                 with dpg.group():
                     dpg.add_text(default_value="syringe 1 Ø [mm]")
-                    self.syringe_diameter_1 = dpg.add_listbox(syringe_diameters, tag="syringe_dia_1", width=80, num_items=7)
+                    self.syringe_diameter_1 = dpg.add_listbox(syringe_diameters, default_value = str("12.36"), tag="syringe_dia_1", width=80, num_items=7)
                 with dpg.group():
                     dpg.add_text(default_value="syringe 2 Ø [mm]")
-                    self.syringe_diameter_2 = dpg.add_listbox(syringe_diameters, tag="syringe_dia_2", width=80, num_items=7)
+                    self.syringe_diameter_2 = dpg.add_listbox(syringe_diameters, default_value = str("12.36"), tag="syringe_dia_2", width=80, num_items=7)
                 with dpg.group():
                     dpg.add_text(default_value="syringe 3 Ø [mm]")
-                    self.syringe_diameter_3 = dpg.add_listbox(syringe_diameters, tag="syringe_dia_3", width=80, num_items=7)
+                    self.syringe_diameter_3 = dpg.add_listbox(syringe_diameters, default_value = str("12.36"), tag="syringe_dia_3", width=80, num_items=7)
                 with dpg.group():
                     dpg.add_text(default_value="syringe 4 Ø [mm]")
-                    self.syringe_diameter_4 = dpg.add_listbox(syringe_diameters, tag="syringe_dia_4", width=80, num_items=7)
+                    self.syringe_diameter_4 = dpg.add_listbox(syringe_diameters, default_value = str("4.65"), tag="syringe_dia_4", width=80, num_items=7)
 
         dpg.add_separator()
 
@@ -237,7 +242,7 @@ class serial_ui():
                         default_value=4, step=1,  width=180,
                         parent=inp_values_group)
                 self.sorting_simulation = dpg.add_input_text(tag="sorting_simulation",
-                        default_value="???", width=830,
+                        default_value="???", width=900,
                         parent=inp_values_group)        
                         
                 # self.cell_concentration_per_ml cell concentration in medium
@@ -245,12 +250,21 @@ class serial_ui():
                 # self.sorting_speed Hz
                 # self.max_sorting_speed Hz, heater capability
                 # self.maximum_sorting_time Maximum amount of hours a full sorting is allowed to take
-
                 # ! self.sorting_simulation = {"Sample": self.channel_m_per_s_1, "Sheath_xy": self.channel_m_per_s_2, "Sheath_z1": self.channel_m_per_s_3, "Sheath_z2": self.channel_m_per_s_4}
 
                 with dpg.group(horizontal=True):
-                    dpg.add_button(label="Calculate Sorting", callback=self.calculate_sorting, tag="calculate_sorting")
+                    with dpg.theme(tag="__demo_theme"):
+                        with dpg.theme_component(dpg.mvButton):
+                            dpg.add_theme_color(dpg.mvThemeCol_Button, (224, 36, 36))
+                            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (224, 36, 36))
+                            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (204, 46, 46))
+                            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 5)
+                            dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 3, 3)
 
+                    dpg.add_button(label="Calculate Sorting", callback=self.calculate_sorting, tag="calculate_sorting")
+                    dpg.bind_item_theme(dpg.last_item(), "__demo_theme")
+
+        dpg.add_checkbox(label="Calculate medium and sorting time for selected sorting speed.", tag="medium_calculation")
         dpg.add_separator()
 
         width, height, channels, data = dpg.load_image("sarcura.png") 

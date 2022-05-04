@@ -1,49 +1,93 @@
 import math 
 
-def calculate_sorting_parameters(channel_m_per_s = 1.5, channel_area_mm2 = 0.003,
+def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_ratio = 0.1, channel_area_mm2 = 0.003,
         cell_concentration_per_ml = 1e06, cell_volume_ml = 10.5,
-        sorting_speed = 2000, max_sorting_speed = 5000, maximum_sorting_time = 4):
+        sorting_speed = 2000, max_sorting_speed = 5000, maximum_sorting_time = 4,
+        calculate_medium_for_sorting_speed = True):
 
+    # internally, everything is calculated for the real cell concentration with sheath and the cell concentration in the sample+sheath
+    cell_volume_ml = cell_volume_ml/sample_to_sheath_ratio
+    cell_concentration_per_ml = sample_to_sheath_ratio*cell_concentration_per_ml
+
+    channel_m_per_s = channel_m_per_s_total # the total m/s of the sample are channel speed 
     channel_m3_per_s = channel_m_per_s*(channel_area_mm2*1e-06)
     channel_l_per_s = channel_m3_per_s*1e03
+    channel_ml_per_s = channel_l_per_s*1e03
     channel_µl_per_s = channel_l_per_s*1e06
+    total_sorting_time = cell_volume_ml/channel_ml_per_s/3600 # if volume is not optimized, time is longer/shorter than needed 
+    print(f"total volume to run trought machine: [µl/min]: {cell_volume_ml:.2f}")
+    print(f"total estimated time [h]: {total_sorting_time:.2f}")
     print(f"channel volume: [µl/min]: {channel_µl_per_s:.2f}")
-    cell_concentration_per_µl = channel_m_per_s*cell_concentration_per_ml*1e-03 # channel_m_per_s needs to be included, smaller fraction = less cells/µl
+    print(f"sample to sheath ratio (true for speed and volume) {sample_to_sheath_ratio:.2f}")
+
+    cell_concentration_per_µl = cell_concentration_per_ml*1e-03 # smaller fraction = less cells/µl
     cell_per_s = cell_concentration_per_µl*channel_µl_per_s # cell_per_s is equal to the needed (!) sorting frequency
     total_cells = cell_concentration_per_ml*cell_volume_ml
 
-    # according to selected sorting speed, calculate if more medium is needed:
-    # it could also do the same for max conc max speed
-    max_cell_concentration_per_ml = sorting_speed/channel_µl_per_s*1e03 # needed for ml
-    max_cell_concentration_per_ml_max_speed = max_sorting_speed/channel_µl_per_s*1e03 # needed for ml
-    print(f"The max cell concentration per ml for a sorting speed of {sorting_speed} Hz is: {max_cell_concentration_per_ml:.2e} cells per ml")
-    print(f"The max cell concentration per ml for a sorting speed of {max_sorting_speed} Hz is: {max_cell_concentration_per_ml_max_speed:.2e} cells per ml")
-    sorter_cap_factor = cell_concentration_per_ml/max_cell_concentration_per_ml
-    print(f"sorter_cap_factor: {sorter_cap_factor:.2f}")
-    cell_volume_additional_ml = (sorter_cap_factor*cell_volume_ml)-cell_volume_ml
-    if cell_volume_additional_ml > 0:
-        print(f"Cell volume additionaly needed to sort with {sorting_speed} Hz: {cell_volume_additional_ml:.1f} ml")
-        print(f"Sorting a cell concentration of {cell_concentration_per_ml/sorter_cap_factor:.2e} / ml with a volume of {cell_volume_ml*sorter_cap_factor} ml \
-equaling to {total_cells:.2e} total cells.")
-    # cell_volume_additional_ml = 0
-    else:
-        print(f"No additional dilution needed. {cell_volume_additional_ml*-1:.1f} ml of medium could have been saved.")
-        print(f"Sorting a cell concentration of {cell_concentration_per_ml:.2e} / ml with a volume of {cell_volume_ml:.1f} ml \
-equaling to {total_cells:.2e} total cells.")
-    # print(f"cell events: [cell/min]: {cell_per_s}")
-    cell_per_s = cell_concentration_per_µl/sorter_cap_factor*channel_µl_per_s # calculated anew with the new concentration -> is now the selected
+    # print(cell_concentration_per_µl)
+    # print(channel_µl_per_s)
+    # print(sorting_speed)
+    # print(cell_per_s)
 
-    print(f"All cells passing by in a speed of {cell_per_s:.1f} [cells/s] and will be sorted by {sorting_speed} Hz. ✓ ")
-    total_sorting_time = total_cells/sorting_speed/3600 # calculate from seconds to hours
+    # calculate the sorter capacity #! needs to be triple checked, should be correct
+    max_cell_concentration_per_ml = sorting_speed/(channel_µl_per_s*1e03) # needed for ml 
+    max_cell_concentration_per_ml_max_speed = max_sorting_speed/(channel_µl_per_s*1e03) # needed for ml
+    print(f"The cell concentration before dilution in the sample stream is {cell_concentration_per_ml/sample_to_sheath_ratio:.2e} cells per ml")
+    print(f"The cell concentration before dilution in the channel is {cell_concentration_per_ml:.2e} cells per ml")
+    print(f"The max cell concentration per ml for a sorting speed of {sorting_speed} Hz is: {max_cell_concentration_per_ml/sample_to_sheath_ratio:.2e} cells per ml")
+    print(f"The max cell concentration per ml for a sorting speed of {max_sorting_speed} Hz is: {max_cell_concentration_per_ml_max_speed/sample_to_sheath_ratio:.2e} cells per ml")
+    
+    # sorter_cap_factor = cell_concentration_per_ml/max_cell_concentration_per_ml
+    sorter_cap_factor = cell_per_s/sorting_speed
+    print(f"Sorter capacity factor: {sorter_cap_factor:.2f}")
+
+    captured_events = cell_per_s-sorting_speed
+    if sorter_cap_factor <= 1:
+        print(f"All cells passing by in a speed of {cell_per_s:.1f} [cells/s] and will be sorted by {sorting_speed} Hz. ✓")
+        print(f"{captured_events*-1:.1f} [cells/s] more could be measured.")
+    else:
+        print(f"All cells passing by in a speed of {cell_per_s:.1f} [cells/s] and will be sorted by {sorting_speed} Hz. ✘")
+        print(f"This would lead to {captured_events:.1f} [cells/s] missed.")
+
+    if calculate_medium_for_sorting_speed is True:
+        # according to selected sorting speed, calculate if more medium is needed:
+        # it could also do the same for max conc max speed
+        cell_volume_additional_ml = (sorter_cap_factor*cell_volume_ml)-(cell_volume_ml)
+        if cell_volume_additional_ml > 0:
+            print(f"Cell volume additionaly needed to sort with {sorting_speed} Hz: {cell_volume_additional_ml*sample_to_sheath_ratio:.1f} ml")
+            print(f"Addtionally {cell_volume_additional_ml*(1-sample_to_sheath_ratio):.2f} ml of sheath will be needed.")
+            print(f"Sorting a cell concentration of {cell_concentration_per_ml/sorter_cap_factor/sample_to_sheath_ratio:.2e} / ml with a volume of {cell_volume_ml*sample_to_sheath_ratio} ml")
+            print(f"    equaling to {total_cells:.2e} total cells.")
+        # cell_volume_additional_ml = 0
+        else:
+            print(f"No additional dilution needed. {cell_volume_additional_ml*-1*sample_to_sheath_ratio:.2f} ml of medium could have been saved.")
+            print(f"Addtionally {cell_volume_additional_ml*-1*(1-sample_to_sheath_ratio):.2f} ml of sheath could have been saved.")
+            print(f"Sorting a cell concentration of {cell_concentration_per_ml/sample_to_sheath_ratio:.2e} / ml with a volume of {cell_volume_ml*sample_to_sheath_ratio:.1f} ml")
+            print(f"    equaling to {total_cells:.2e} total cells.")
+        # print(f"cell events: [cell/min]: {cell_per_s}")
+        cell_per_s = cell_concentration_per_µl/sorter_cap_factor*channel_µl_per_s # calculated anew with the new concentration -> is now the selected
+        sorting_speed = cell_per_s # ! sorting time should go up if cells are in lower dilution calculated in calculate_medium_for_sorting_speed
+        print(sorting_speed)
+        total_sorting_time = total_cells/sorting_speed/3600 # calculate from seconds to hours
+    else:
+        print("No media optimization.")
+        cell_volume_additional_ml = 0
+
+
+
+    # ! sorting time should go up if cells are in lower dilution calculated in calculate_medium_for_sorting_speed
+
+    
+
     print(f"Sorting will be completed in {round(total_sorting_time, 2)} hours.")
     sorting_percentage = maximum_sorting_time/(total_sorting_time)*100# for 4 hours maximum time
     if total_sorting_time > maximum_sorting_time:
         print(f"Complete sample sorting cannot be completed under {maximum_sorting_time} hours.")
         print(f"{sorting_percentage:.1f}% of the sample could be sorted in time.")
+    # ! sorting time should go up if cells are in lower dilution
+    # total_sorting_time = 0
 
-    return round(channel_µl_per_s), round(cell_per_s), round(total_sorting_time, 2), round(cell_volume_additional_ml, 3)
-    # return {"Cells per second":round(cell_per_s), "Additional cell volume needed":round(cell_volume_additional_ml),
-    #     "channel volume": round(channel_µl_per_s)}
+    return round(channel_µl_per_s, 5), round(cell_per_s), round(total_sorting_time, 2), round(cell_volume_additional_ml*sample_to_sheath_ratio, 3)
 
 def calculate_stepspeed(channel_m_per_s = 1, syringe_diameter = 12.08, channel_area_mm2 = 0.003):
     # from: https://www.harvardapparatus.com/media/harvard/pdf/Syringe%20Selection%20Guide.pdf
@@ -78,6 +122,8 @@ def calculate_stepspeed(channel_m_per_s = 1, syringe_diameter = 12.08, channel_a
     return stepspeed
     
 if __name__ == '__main__':
-    print(calculate_stepspeed(channel_m_per_s= 1/2, syringe_diameter = 12.08, channel_area_mm2 = 0.03*0.1))
-    print(calcuate_sorting_parameters(channel_m_per_s = 1/4, channel_area_mm2 = 0.03*0.1, cell_concentration_per_ml = 1e7,
-        cell_volume_ml= 7, sorting_speed= 5000, max_sorting_speed=5000, maximum_sorting_time = 4))
+    # print(calculate_stepspeed(channel_m_per_s= 1/2, syringe_diameter = 12.08, channel_area_mm2 = 0.03*0.1))
+
+    print(calculate_sorting_parameters(channel_m_per_s_total = 2, sample_to_sheath_ratio = 1/10, channel_area_mm2 = 0.03*0.1,
+        cell_concentration_per_ml = 2*1e6, cell_volume_ml = 1, sorting_speed = 1500, max_sorting_speed = 5000,
+        maximum_sorting_time = 4, calculate_medium_for_sorting_speed = True))
