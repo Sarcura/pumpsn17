@@ -81,7 +81,7 @@ class serial_ui():
         # this is now calculated for channel 4 as standard sample channel 
         
         # calculate_medium_for_sorting_speed = False
-        self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.cell_volume_additional_ml = calculate_sorting_parameters(
+        self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.additional_cell_media, self.additional_sheath_fluid = calculate_sorting_parameters(
             float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.channel_m_per_s_4)),
             round(float(dpg.get_value(self.channel_area_sqmm_1)), 5),
             int(dpg.get_value(self.cell_concentration_per_ml)), float(dpg.get_value(self.cell_volume_ml)),
@@ -89,9 +89,11 @@ class serial_ui():
             float(dpg.get_value(self.maximum_sorting_time)), dpg.get_value(item="medium_calculation")
         )
 
-        output = f"Sample speed in channel [µl/s]: {self.channel_µl_per_s}, [Cells/s]: {self.cell_per_s}, Sorting duration [h]: {self.total_sorting_time}, Additionally needed volume [ml]: {self.cell_volume_additional_ml}"
+        output1 = f"Sample speed in channel [µl/s]: {self.channel_µl_per_s}, [Cells/s]: {self.cell_per_s}, Sorting duration [h]: {self.total_sorting_time}"
+        output2 = f"Additionally needed cell media [ml]: {self.additional_cell_media}, Additionally needed sheath fluid [ml]: {self.additional_sheath_fluid}"
 
-        dpg.set_value("sorting_simulation", output)
+        dpg.set_value("sorting_simulation1", output1)
+        dpg.set_value("sorting_simulation2", output2)
 
     def update_ports_callback(self):
         self.my_serial.get_availabile_port_list()
@@ -241,8 +243,11 @@ class serial_ui():
                 self.maximum_sorting_time = dpg.add_input_int(tag="maximum_sorting_time",
                         default_value=4, step=1,  width=180,
                         parent=inp_values_group)
-                self.sorting_simulation = dpg.add_input_text(tag="sorting_simulation",
-                        default_value="???", width=900,
+                self.sorting_simulation = dpg.add_input_text(tag="sorting_simulation1",
+                        default_value="not yet calculated", width=700,
+                        parent=inp_values_group)        
+                self.sorting_simulation = dpg.add_input_text(tag="sorting_simulation2",
+                        default_value="please enter values and start calculation", width=700,
                         parent=inp_values_group)        
                         
                 # self.cell_concentration_per_ml cell concentration in medium
