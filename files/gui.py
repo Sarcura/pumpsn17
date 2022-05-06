@@ -3,6 +3,15 @@ from themes import create_theme_imgui_light, create_theme_client, create_theme_s
 from arduino import Arduino
 from flowspeed_motorspeed import calculate_stepspeed, calculate_sorting_parameters
 import yaml
+import logging
+import datetime
+today_date = str(datetime.date.today())+".log"
+logging.basicConfig(
+    filename=today_date,
+    # filemode='+w',
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 class serial_ui():
     CLIENT_THEME = None
@@ -26,10 +35,10 @@ class serial_ui():
         # self.my_serial.hwid =  # should be changed by dropdown to search teensy, ardunio..
         try:
             self.portList  = self.my_serial.get_availabile_port_list()
-            print(self.portList)
+            logging.info(self.portList)
         except:
             self.portList  = []
-            print("no devices found.")
+            logging.info("no devices found.")
         self.SELECTED_DEVICE = ""
         self.dpg_setup()
         self.create_primary_window()
@@ -41,9 +50,9 @@ class serial_ui():
         dpg.set_primary_window(self.prime_window, True)
         while dpg.is_dearpygui_running():
             if self.my_serial.link:
-                # print(self.stepspeed)
+                # logging.info(self.stepspeed)
                 pass
-                # print("teensy connected")
+                # logging.info("teensy connected")
                 # recv_msg = self.my_serial.read_serial()
                 # if recv_msg:
                 #     max_length = 122
@@ -52,7 +61,7 @@ class serial_ui():
                 #         self.log_msg(truncated_msg, serial_ui.SERVER_THEME)
                 #     else:
                 #         self.log_msg(recv_msg, serial_ui.SERVER_THEME)
-                #     print(f"Received: {recv_msg}")
+                #     logging.info(f"Received: {recv_msg}")
                 #     self.log_msg(recv_msg, serial_ui.SERVER_THEME)
             try:
                 dpg.render_dearpygui_frame()
@@ -63,10 +72,10 @@ class serial_ui():
 
     def calculate_motors(self):
         # the channel speeds are multiplied with the fractional value per channel
-        # print((self.syringe_diameter_1))
-        # print(float(self.syringe_diameter_1))        
-        # print((self.stepspeed_1))
-        # print(type(self.stepspeed_1))
+        # logging.info((self.syringe_diameter_1))
+        # logging.info(float(self.syringe_diameter_1))        
+        # logging.info((self.stepspeed_1))
+        # logging.info(type(self.stepspeed_1))
         stepspeed1 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_1))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm_1)))
         stepspeed2 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_2))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm_2)))
         stepspeed3 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_3))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm_3)))
@@ -114,7 +123,7 @@ class serial_ui():
             float(dpg.get_value(self.channel_m_per_s_3)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm_3)),
             float(dpg.get_value(self.channel_m_per_s_4)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm_4)),
         ]
-        print(speed_position)
+        logging.info(speed_position)
         with open(file_name, 'w+') as f:
             yaml.safe_dump(speed_position, f, default_flow_style=False)
 
@@ -122,8 +131,8 @@ class serial_ui():
         file_name = "pump_settings.yaml"
         with open(file_name) as f:
             doc = yaml.safe_load(f)
-            print("loaded data:")
-            print(doc)
+            logging.info("loaded data:")
+            logging.info(doc)
             speed_position = doc
         # dpg.set_item_user_data("load_data", user_data=doc) 
         
@@ -272,10 +281,10 @@ class serial_ui():
         dpg.add_checkbox(label="Calculate medium and sorting time for selected sorting speed.", tag="medium_calculation")
         dpg.add_separator()
 
-        width, height, channels, data = dpg.load_image("sarcura.png") 
-        with dpg.texture_registry():
-            texture_id = dpg.add_static_texture(width, height, data) 
-        dpg.add_image(texture_id)
+        # width, height, channels, data = dpg.load_image("sarcura.png") 
+        # with dpg.texture_registry():
+        #     texture_id = dpg.add_static_texture(width, height, data) 
+        # dpg.add_image(texture_id)
 
 # dictionary_name[key] = value
                 # dpg.add_button(label="Clear Filter",
@@ -330,14 +339,14 @@ class serial_ui():
 
     def selected_port_callback(self, Sender):
         self.SELECTED_DEVICE = dpg.get_value(Sender).split(' ')[0]
-        print("selected device: ")
-        print(self.SELECTED_DEVICE)
-        # print(self.SELECTED_DEVICE.count(" "))
-        # print(len(self.SELECTED_DEVICE))
-        # print(type(self.SELECTED_DEVICE))
+        logging.info("selected device: ")
+        logging.info(self.SELECTED_DEVICE)
+        # logging.info(self.SELECTED_DEVICE.count(" "))
+        # logging.info(len(self.SELECTED_DEVICE))
+        # logging.info(type(self.SELECTED_DEVICE))
         self.my_serial.port = self.SELECTED_DEVICE
         self.my_serial.connect()
-        print(f"User selected: {self.SELECTED_DEVICE}")
+        logging.info(f"User selected: {self.SELECTED_DEVICE}")
 
     def dpg_show_view_port(self):
         dpg.set_viewport_resizable(False)
@@ -383,7 +392,7 @@ class serial_ui():
                     self.motor1_enable, self.motor1_direction, self.position_2, 0, 
                     self.motor2_enable, self.motor2_direction, self.position_3, 0,
                     self.motor3_enable, self.motor3_direction, self.position_4, 0]
-
+        logging.info(data_list)
         self.my_serial.send_to_arduino(data_list)
 
     # def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
@@ -402,15 +411,15 @@ class serial_ui():
     #     msg_to_send = dpg.get_value(user_data['userSpeedTag'])
 
     #     if not self.SELECTED_DEVICE:
-    #         print("User is not selected any device.")
+    #         logging.info("User is not selected any device.")
     #     elif not self.my_serial.link:
-    #         print("Device is not connected")
+    #         logging.info("Device is not connected")
     #     elif not msg_to_send:
-    #         print("No message.")
+    #         logging.info("No message.")
     #     else:
     #         self.my_serial.write_to_serial(msg_to_send)
     #         self.log_msg(msg_to_send, serial_ui.CLIENT_THEME)
-    #         print(f"Sent |{msg_to_send}| to {self.SELECTED_DEVICE}")
+    #         logging.info(f"Sent |{msg_to_send}| to {self.SELECTED_DEVICE}")
     #         dpg.configure_item("usrMsgTxt", default_value="")
 
     def log_msg(self, message, custom_theme):
