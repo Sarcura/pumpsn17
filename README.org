@@ -38,8 +38,7 @@ Screws and nuts for optics assemblies are employed, which, in
 conjunction with microstepping the motor, result in stable flow even
 at very low flowrates. The pump uses it's structural components as
 endstops, and the user controls the system via a software frontend
-based on Pure Data (Pd), a graphical programming language, which
-allows for straightforward and live system automation, at a small
+based on Python, at a small
 fraction of the cost of a commercial pump.
 
 ** Mechanics - Files and Bill of Materials   
@@ -395,7 +394,6 @@ lasercut enclosure are based on a design by Sparkovsky on Thingiverse
 (https://www.thingiverse.com/thing:1441432).
 #+END_QUOTE
 
-
 ** Setting up the System 
 - program the teensy
 - start the software
@@ -421,15 +419,22 @@ Screenshot of the program.
 
 TODO: explain the code
 
-** To install the python environment, use the requirements.txt
-*pip install -r -requirements.txt
+#+begin_src python
+def somepythonfunction
 
-*After modification, to create an executable use on of the following commands:
+#+end_src
+
+** To install the python environment, use the requirements.txt
+  #+BEGIN_SRC C :exports code      
+  pip install -r -requirements.txt
+  #+END_SRC
+
+* After modification, to create an executable with pyinstaller use on of the following commands:
 
   #+BEGIN_SRC C :exports code      
-  pyinstaller --python-option 3.9 .\pyserial_gui.spec --onefile --icon=sarcura.ico"
-  pyinstaller --onefile --i sarcura.ico .\gui.py"
-  pyinstaller --onefile --i sarcura.ico -w .\gui.py" # no console window
+  pyinstaller --python-option 3.9 .\pyserial_gui.spec --onefile --icon=sarcura.ico
+  pyinstaller --onefile --i sarcura.ico .\gui.py
+  pyinstaller --onefile --i sarcura.ico -w .\gui.py
   #+END_SRC
 
 or use pip installed auto-py-to-exe and create it via GUI
