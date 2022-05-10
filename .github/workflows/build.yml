@@ -1,6 +1,9 @@
 name: Python package
 
-on: [push]
+on:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v9.7.3
 
 jobs:
   build:
