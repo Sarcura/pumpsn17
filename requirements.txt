@@ -1,4 +1,6 @@
-pyserial
+wheel
+pyinstaller
+pySerial
 pySerialTransfer
 numpy
 dearpygui
