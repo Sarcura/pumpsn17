@@ -23,4 +23,4 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: build with pyinstaller
         run: |
-          pyinstaller --onefile --i files\sarcura.ico -w files\gui.py
+          pyinstaller --onefile --i \files\sarcura.ico -w \files\gui.py
