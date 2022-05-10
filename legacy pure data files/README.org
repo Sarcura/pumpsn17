@@ -357,7 +357,7 @@ mounted. Right: Schematic diagram.
 ** Introduction - mode of operation and choice of tools
 
 The pumps are controlled with a microcontroller (a 'teensy' 3.2 or
-3.1) and a software front end written in Python. The teensy
+3.1) and a software front end written in Pure Data (PD). The teensy
 (https://www.pjrc.com/teensy/teensy31.html) is a 3.3V, 32-bit ARM
 based microcontroller that is compatible with the Arduino toolchain
 (https://www.arduino.cc/en/Guide/HomePage) and therefore easy to
@@ -367,13 +367,18 @@ transfer they allow
 from controlling machinery, the teensy is well suited for data
 acquisition tasks.
 
-The GUI is written with the dearpygui library, and connects user input with calculated output and the usb device via pySerial.
+Pure Data (PD, https://puredata.info/) is an open source dataflow
+programming language used primarily for music and video applications.
+It runs on nearly every computing platform, is straightforward to
+learn and can be modified 'live', which is great for microfluidics
+experimentation.
 
-The communication protocol between the microcontroller and PD is pySerial. It is a very
+The communication protocol between the microcontroller and PD is OSC
+('Open Sound Control', https://www.opensoundcontrol.org). It is a very
 flexible, easy to use two-way communication.
 
 #+CAPTION: System diagram.
-[[software-diagram.drawio.svg]]
+[[images/PumpsSoftwareWorkflow.png]]
 #+BEGIN_QUOTE
 System diagram.
 #+END_QUOTE
@@ -387,7 +392,28 @@ must additionally install 'Teensyduino' (download:
 https://www.pjrc.com/teensy/td_download.html). There is a detailed
 tutorial on software installation and its use on the webpage. Most of
 the Arduino libraries are compatible with teensy, Teensyduino itself
-comes with many optimized ones.
+comes with many optimized ones (full install recommended).
+
+*** Install Pure Data (PD) 
+Pure Data can be downloaded from the PD community site
+(https://puredata.info/downloads) and installation is straightforward.
+
+For Mac or Win you should choose to install PD-extended, which is
+pre-packaged with many additional externals from the community (all
+necessary things needed for this project should be installed per
+default). PD-extended is not actively maintained any more, but still
+works well. Alternatively you can use PD-Vanilla and install externals
+via the 'deken'-plugin (https://github.com/pure-data/deken) as
+required.
+
+On a Linux system, you should use 'PD-L2ORK'
+(http://l2ork.music.vt.edu/main/make-your-own-l2ork/software/), an
+up-to-date, maintained and beautified version of PD-extended from the
+'Linux Laptop Orchestra' (Virginia Tech Music Department). Beta
+versions for Mac and Win are now also available. PD-L2ORK runs well on
+Ubuntu, but also under Raspbian on Raspberry Pi Model 2 and 3. This
+allows a small touchscreen interface to be used resulting in a
+small-footprint solution.
 
 #+CAPTION: Raspberry Pi Model 3 based  to control syringe pumps. The files for the lasercut enclosure are based on a design by Sparkovsky on Thingiverse (https://www.thingiverse.com/thing:1441432).
 [[images/RaspberryPi.jpeg]]
@@ -400,25 +426,112 @@ lasercut enclosure are based on a design by Sparkovsky on Thingiverse
 
 ** Setting up the System 
 - program the teensy
-- start the software
+- open the PD-program 
+     - and you should (almost) be ready to go. 
+
+You can test the system without the microcontroller attached to the
+pumps. If the communication works via OSC, the flow rates you transfer
+(in microL/h) and the direction of movement will be mirrored in the
+smaller sliders beneath the main control elements in the PD-frontend.
 
 ** How the System Works  
-TODO: explain the code
+In a nutshell, the desired flowrate (in uL/h) is converted into a
+delay time (in microseconds) which defines when the motor on the pump
+has to step. To make this delay time as precise as possible, an
+interrupt routine is used that checks every 10 microseconds if a motor
+has to be stepped or not - no matter what the rest of the program is
+doing at that time. Flow rate to delay time conversion is dependent on
+the type of motor (steps/rev), thread-type of the leadscrew used
+(microns/revolution) and syringe diameter.
+
+We supply two versions of the programs here that differ where these
+calculations take place:
+ 
+- 'Hardcoded': directly on the microcontroller (PD transfers the flow
+  rate value, the syringe diameter and other values are to be changed
+  in the program running on the teensy). This is convenient if one
+  always works with syringes of a certain diameter.
+- 'Flexible': all calculations are done in PD and the resulting delay
+  times in microseconds are transferred. This allows all parameters in
+  PD to be changed on the fly without reprogramming the
+  microcontroller when changing hardware.
+
+** Getting it to Run
+*** 'Hardcoded' Version (calculations on the teensy)
+- upload the corresponding file to the microcontroller
+  ([[./files/Hardcoded4Pumps.ino]]). Have a look at the code, everything
+  you can and might have to change should be explained in the
+  comments.
+- place the PD-program ([[./files/Hardcoded4Pumps.pd]]) together with a
+  little helper-program for OSC ([[./files/o.io.slipserial.pd]]) in a
+  folder and open it in PD-extended or PD-L2ORK.
 
 #+CAPTION: Screenshot of the program. 
-[[Software.png]]
+[[images/Hardcoded4PumpsScreenshot.png]]
 #+BEGIN_QUOTE
-Screenshot of the program.
+Screenshot of the program. 
 #+END_QUOTE
-#+CAPTION: Screenshot of the program.
 
-[[Software2.png]]
+- Hit [devices], and the available serial ports will show in the
+  console window. One of them is connected to the teensy. Click [open
+  x[ (change the numbers by entering editing mode, ctrl-e (linux),
+  cmd-e (mac)) and PD should connect to the teensy.
+
+- The section 'Control Pumps Manually' allows you to dial in your
+  desired flow rate for each pump. The buttons on the right side of
+  the sliders will change direction. If you right-click on an item/box
+  a properties and help dialog is available which lets you learn and
+  customize. If the values are transferred to the teensy, the
+  microcontroller will send the list of numbers back. Those are
+  displayed underneath and give immediate visual feedback. If you have
+  the pumps connected and powered, you should see the changes there
+  too.
+
+- To transfer the pump settings, you have to click the orange 'bang'
+  in 'Communication to and from microcontroller'. For immediate
+  response when changing settings, click the orange toggle switch to
+  mark it [X].
+
+- 'Control Pumps Automated' is a simple tool for automation. Setting
+  the toggle-switch to 'on' [X] activates a counter (per default here
+  in seconds) which will turnover to 0 after some time (here 1h). The
+  [select] box activates the attached lists of numbers (direction
+  pump1 flowrate pump1 ....) after the dialled-in times. To change it,
+  get into edit-mode, change the values and the numbers of events to
+  your liking (you will have to copy/paste/delete structures and
+  reconnect).
+
+*** 'Flexible' Version (calculations in PD) 
+This version of the programme is reduced in its footprint to be
+displayed on a 7" screen (in our case a raspberry Pi Model 3 with a
+touchscreen). It uses PD's 'Graph on Parent (GOP)' feature which
+allows program complexity to be hidden. It is used similarly as above,
+but lets you select serial ports as well as syringe diameters. The
+right-hand part outside the 'GOP' can be modified for more complex
+automation.
+
+#+CAPTION: Screenshot of the program. 
+[[images/Flexible3or4PumpsScreenshot.png]]
 #+BEGIN_QUOTE
 Screenshot of the program.
 #+END_QUOTE
 
 - upload the corresponding file to the microcontroller
   ([[./files/Flexible3or4Pumps.ino]]).
+- place the PD-programs ([[./files/Flexible3or4Pumps.pd]]) and
+  ([[./files/Flexible3or4PumpsGOP.pd]]) together with a little
+  helper-program for OSC ([[./files/o.io.slipserial.pd]]) in a folder and
+  open it in PD-extended or PD-L2ORK.
+- The file 'Flexible3or4Pumps.pd' is the software front end. If you
+  want to change the program in any way, changes have to be conducted
+  in 'Flexible3or4PumpsGOP.pd'. The program actually contains controls
+  for 4 pumps, but only 3 are shown in the front end. To have a 4-pump
+  system, enlarge the red 'GOP' rectangle and move the controls for
+  the 4th pump into the space. It will then show in the front end. The
+  calculations in 'Flexible3or4PumpsGOP.pd' should be simple to adapt
+  to modified hardware.
+  
+
 
 To create an executable, use
 "pyinstaller --python-option 3.9 .\pyserial_gui.spec --onefile --icon=sarcura.ico"
