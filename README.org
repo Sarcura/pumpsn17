@@ -373,7 +373,7 @@ The communication protocol between the microcontroller and PD is pySerial. It is
 flexible, easy to use two-way communication.
 
 #+CAPTION: System diagram.
-[[software-diagram.drawio.svg]]
+[[images/software-diagram.drawio.svg]]
 #+BEGIN_QUOTE
 System diagram.
 #+END_QUOTE
@@ -406,13 +406,13 @@ lasercut enclosure are based on a design by Sparkovsky on Thingiverse
 TODO: explain the code
 
 #+CAPTION: Screenshot of the program. 
-[[Software.png]]
+[[images/Software.png]]
 #+BEGIN_QUOTE
 Screenshot of the program.
 #+END_QUOTE
 #+CAPTION: Screenshot of the program.
 
-[[Software2.png]]
+[[images/Software2.png]]
 #+BEGIN_QUOTE
 Screenshot of the program.
 #+END_QUOTE
@@ -420,7 +420,10 @@ Screenshot of the program.
 - upload the corresponding file to the microcontroller
   ([[./files/Flexible3or4Pumps.ino]]).
 
-To create an executable, use
+** To install the python environment, use the requirements.txt
+*pip install -r -requirements.txt
+
+*After modification, to create an executable use
 "pyinstaller --python-option 3.9 .\pyserial_gui.spec --onefile --icon=sarcura.ico"
 or:
 "pyinstaller --onefile --i sarcura.ico .\gui.py"
