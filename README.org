@@ -399,7 +399,6 @@ lasercut enclosure are based on a design by Sparkovsky on Thingiverse
 - start the software
 
 ** How the System Works  
-TODO: explain the software functions?
 TODO: explain the GUI
 
 #+CAPTION: Screenshot of the program. 
@@ -417,12 +416,37 @@ Screenshot of the program.
 - upload the corresponding file to the microcontroller
   ([[./files/Flexible3or4Pumps.ino]]).
 
-TODO: explain the code
+TODO: explain the GUI code
+TODO: explain the software functions
+
+
+The function calculate_stepspeed accepts the channel speed (total speed of all fluids combined inside the channel),
+the inner diameter of the syringe according to datasheet and the channel cross sectional area in mm.
+The output is the stepspeed of the stepper motor responsible for the according channel.
 
 #+begin_src python
-def somepythonfunction
-
+  def calculate_stepspeed(channel_m_per_s = 1, syringe_diameter = 12.08, channel_area_mm2 = 0.003):
+  return stepspeed
 #+end_src
+
+The function calculate_sorting_parameters is imported from flowspeed_motorspeed.py and accepts various channel size parameters,
+the total cell concentration, the volume of the cell suspension, the soring speed that should be used, the maximum sorting speed,
+and the possibility to set a flag for calculation of cell concentration adjustment for the set speed.
+The outputs are rounded because it is unlikely that the accuracy is that high.
+In this order, the function outputs the calculated µl per s, cells per second, the calculated total sorting time,
+the additionally needed cell medium after adopting the cell concentration to the sorting speed and 
+the sheath volume calculated without concentration adaption and the additionally needed sheath volume after adaption.
+
+#+begin_src python
+def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_ratio = 0.1, channel_area_mm2 = 0.003,
+  cell_concentration_per_ml = 1e06, cell_volume_ml = 10.5,
+  sorting_speed = 2000, max_sorting_speed = 5000, maximum_sorting_time = 4,
+  calculate_medium_for_sorting_speed = True):
+
+  return (round(channel_µl_per_s, 5), round(cell_per_s), round(total_sorting_time, 2),
+      round(additional_cell_media, 3), round(sheath_fluid, 3), round(additional_sheath_fluid, 3))
+#+end_src
+
 
 ** To install the python environment, use the requirements.txt
   #+BEGIN_SRC C :exports code      

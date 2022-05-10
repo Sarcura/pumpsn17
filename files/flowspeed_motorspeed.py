@@ -9,6 +9,8 @@ def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_r
     # internally, everything is calculated for the real cell volume sample+sheath and the cell concentration in the sample+sheath
     cell_volume_ml = cell_volume_ml/sample_to_sheath_ratio
     cell_concentration_per_ml = sample_to_sheath_ratio*cell_concentration_per_ml
+    # sheath fluid calculation
+    sheath_fluid = cell_volume_ml*(1-sample_to_sheath_ratio)
 
     channel_m_per_s = channel_m_per_s_total # the total m/s of the sample are channel speed 
     channel_m3_per_s = channel_m_per_s*(channel_area_mm2*1e-06)
@@ -94,7 +96,7 @@ def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_r
     # total_sorting_time = 0
 
     return (round(channel_µl_per_s, 5), round(cell_per_s), round(total_sorting_time, 2),
-        round(additional_cell_media, 3), round(additional_sheath_fluid, 3))
+        round(additional_cell_media, 3), round(sheath_fluid, 3), round(additional_sheath_fluid, 3))
 
 def calculate_stepspeed(channel_m_per_s = 1, syringe_diameter = 12.08, channel_area_mm2 = 0.003):
     # from: https://www.harvardapparatus.com/media/harvard/pdf/Syringe%20Selection%20Guide.pdf

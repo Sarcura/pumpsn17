@@ -94,7 +94,7 @@ class serial_ui():
         # this is now calculated for channel 4 as standard sample channel 
         
         # calculate_medium_for_sorting_speed = False
-        self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.additional_cell_media, self.additional_sheath_fluid = calculate_sorting_parameters(
+        self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.additional_cell_media, self.sheath_fluid, self.additional_sheath_fluid = calculate_sorting_parameters(
             float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.channel_m_per_s_4)),
             round(float(dpg.get_value(self.channel_area_sqmm_1)), 5),
             int(dpg.get_value(self.cell_concentration_per_ml)), float(dpg.get_value(self.cell_volume_ml)),
@@ -103,7 +103,7 @@ class serial_ui():
         )
 
         output1 = f"Sample speed in channel [µl/s]: {self.channel_µl_per_s}, [Cells/s]: {self.cell_per_s}, Sorting duration [h]: {self.total_sorting_time}"
-        output2 = f"Additionally needed cell media [ml]: {self.additional_cell_media}, Additionally needed sheath fluid [ml]: {self.additional_sheath_fluid}"
+        output2 = f"Additionally needed cell media [ml]: {self.additional_cell_media}, Total needed sheath fluid [ml]: {self.sheath_fluid+self.additional_sheath_fluid}"
 
         dpg.set_value("sorting_simulation1", output1)
         dpg.set_value("sorting_simulation2", output2)
@@ -432,3 +432,10 @@ class serial_ui():
 
 if __name__ == "__main__":
     gui = serial_ui()
+    import git
+    repo = git.Repo(search_parent_directories=True)
+    sha = repo.head.object.hexsha
+    x = repo.head.object
+    print(repo)
+    print(sha)
+    print(x)
