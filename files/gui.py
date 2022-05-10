@@ -1,5 +1,5 @@
 
-# TODO: calculate total needed fluids. create buttons for faster forward/back of single pumps
+# TODO: create buttons for faster forward/back of single pumps
 # TODO: set sw endstops to better values HINT: slight increase, try experimentally
 # TODO: test auto pyinstaller on github workflow
 
