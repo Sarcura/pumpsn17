@@ -1,3 +1,7 @@
+
+# TODO: calculate total needed fluids. create buttons for faster forward/back of single pumps
+# TODO: set sw endstops to better values HINT: slight increase
+
 import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
 from arduino import Arduino
