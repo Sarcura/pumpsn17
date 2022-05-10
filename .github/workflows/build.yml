@@ -40,14 +40,14 @@ jobs:
           - os: macos-latest
             TARGET: macos
             CMD_BUILD: >
-                pyinstaller -F -w -n syringepumps -i files/syringepumps.icns files/gui.py &&
+                pyinstaller -F -w -n syringepumps -i files/sarcura.icns files/gui.py &&
                 cd dist/ &&
                 zip -r9 syringepumps syringepumps.app/
             OUT_FILE_NAME: syringepumps.zip
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: pyinstaller -F -w -n syringepumps -i files/syringepumps.ico files/gui.py
+            CMD_BUILD: pyinstaller -F -w -n syringepumps -i files/sarcura.ico files/gui.py
             OUT_FILE_NAME: syringepumps.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
     steps:
