@@ -43,13 +43,18 @@ jobs:
                 pyinstaller -F -w -n syringepumps -i files/sarcura.icns files/gui.py &&
                 cd dist/ &&
                 zip -r9 syringepumps syringepumps.app/
-            OUT_FILE_NAME: syringepumps.zip
+            OUT_FILE_NAME: syringepumps_macos.zip
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
             CMD_BUILD: pyinstaller -F -w -n syringepumps -i files/sarcura.ico files/gui.py
             OUT_FILE_NAME: syringepumps.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
+          - os: linux-latest
+            TARGET: linux
+            CMD_BUILD: pyinstaller -F -w -n syringepumps files/gui.py
+            OUT_FILE_NAME: syringepumps_linux
+            ASSET_MIME: application/x-executable
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python "3.10"
