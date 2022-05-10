@@ -351,8 +351,6 @@ mounted. Right: Schematic diagram.
   gets hot and the motor might have enough torque to continue beyond
   the end-stop, damaging the pump assembly.
 
-
-
 * Software for Syringe Pumps
 ** Introduction - mode of operation and choice of tools
 
@@ -403,7 +401,8 @@ lasercut enclosure are based on a design by Sparkovsky on Thingiverse
 - start the software
 
 ** How the System Works  
-TODO: explain the code
+TODO: explain the software functions?
+TODO: explain the GUI
 
 #+CAPTION: Screenshot of the program. 
 [[images/Software.png]]
@@ -420,12 +419,17 @@ Screenshot of the program.
 - upload the corresponding file to the microcontroller
   ([[./files/Flexible3or4Pumps.ino]]).
 
+TODO: explain the code
+
 ** To install the python environment, use the requirements.txt
 *pip install -r -requirements.txt
 
-*After modification, to create an executable use
-"pyinstaller --python-option 3.9 .\pyserial_gui.spec --onefile --icon=sarcura.ico"
-or:
-"pyinstaller --onefile --i sarcura.ico .\gui.py"
-"pyinstaller --onefile --i sarcura.ico -w .\gui.py" # no console window
-or use pip installed auto-py-to-exe and creat it via GUI
+*After modification, to create an executable use on of the following commands:
+
+  #+BEGIN_SRC C :exports code      
+  pyinstaller --python-option 3.9 .\pyserial_gui.spec --onefile --icon=sarcura.ico"
+  pyinstaller --onefile --i sarcura.ico .\gui.py"
+  pyinstaller --onefile --i sarcura.ico -w .\gui.py" # no console window
+  #+END_SRC
+
+or use pip installed auto-py-to-exe and create it via GUI
