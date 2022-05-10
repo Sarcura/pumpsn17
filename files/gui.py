@@ -432,10 +432,10 @@ class serial_ui():
 
 if __name__ == "__main__":
     gui = serial_ui()
-    import git
-    repo = git.Repo(search_parent_directories=True)
-    sha = repo.head.object.hexsha
-    x = repo.head.object
-    print(repo)
-    print(sha)
-    print(x)
+    # import git
+    # repo = git.Repo(search_parent_directories=True)
+    # sha = repo.head.object.hexsha
+    # x = repo.head.object
+    # print(repo)
+    # print(sha)
+    # print(x)
