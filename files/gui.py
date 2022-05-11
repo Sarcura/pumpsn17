@@ -1,6 +1,7 @@
 
 # TODO: create buttons for faster forward/back of single pumps, setting a 0 position for sw endstop calculation
 # TODO: set sw endstops to better values HINT: slight increase, try experimentally
+# TODO: Progress bar would be nice to have, maybe even with ml scale
 
 import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
@@ -111,6 +112,10 @@ class serial_ui():
         ## this creates a window at bottom
         child_logger_id = dpg.add_child_window(tag="logger", width=870, height=340)
         self.filter_id = dpg.add_filter_set(parent=child_logger_id)
+
+    # def show_hide_loading(self):
+    #     if dpg.hide_item
+    #     dpg.add_loading_indicator(circle_count=3)
 
     def save_state(self, sender, app_data, user_data):
         file_name = "pump_settings.yaml"
@@ -311,28 +316,32 @@ class serial_ui():
 
     def create_primary_window(self):
         with dpg.window(tag="Primary Window", autosize=True) as self.prime_window:
-            with dpg.group(horizontal=True):
-                # After clicking it will show a list view of ports
-                dpg.add_button(tag="avPortsBtn", label="Refresh Available Ports", callback=self.update_ports_callback)
-                if not self.portList:
-                    dpg.add_listbox(["No Ports available"], tag="__listPortsTag",
-                            width=300,
-                            num_items=-1, callback=self.selected_port_callback)
-                else:
-                    dpg.add_listbox(self.portList, tag="__listPortsTag",
-                        width=300, num_items=2,
-                        callback=self.selected_port_callback)
+            with dpg.tab_bar():
+                with dpg.tab(label="Connection"):
+                    with dpg.group(horizontal=True):
+                        # After clicking it will show a list view of ports
+                        dpg.add_button(tag="avPortsBtn", label="Refresh Available Ports", callback=self.update_ports_callback)
+                        if not self.portList:
+                            dpg.add_listbox(["No Ports available"], tag="__listPortsTag",
+                                    width=300,
+                                    num_items=-1, callback=self.selected_port_callback)
+                        else:
+                            dpg.add_listbox(self.portList, tag="__listPortsTag",
+                                width=300, num_items=2,
+                                callback=self.selected_port_callback)
+                with dpg.tab(label="Pumps"):
+                    self.create_send_speed()
 
-            self.create_send_speed()
-            self.create_calculate()
-            # self.create_msg_and_filter_columns()
-            self.create_logger_window()
+                with dpg.tab(label="Simulations"):
+                    self.create_calculate()
+                    # self.create_msg_and_filter_columns()
+                    # self.create_logger_window()
 
     def dpg_setup(self):
         dpg.create_context()
         windowWidth  = 1100
         windowHeight = 335
-        dpg.create_viewport(title='Serial GUI', width=windowWidth, height=windowHeight)
+        dpg.create_viewport(title='Syringe Pump Control', width=windowWidth, height=windowHeight)
         dpg.setup_dearpygui()
 
     def selected_port_callback(self, Sender):
