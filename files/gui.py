@@ -138,7 +138,6 @@ class serial_ui():
             logging.info("loaded data:")
             logging.info(doc)
             speed_position = doc
-        # dpg.set_item_user_data("load_data", user_data=doc) 
         
         dpg.set_value(self.channel_m_per_s, speed_position[0])
         dpg.set_value(self.channel_m_per_s_1, speed_position[1]), dpg.set_value(self.syringe_diameter_1, speed_position[2]), dpg.set_value(self.channel_area_sqmm_1, speed_position[3]),
