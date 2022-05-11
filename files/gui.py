@@ -1,5 +1,5 @@
 
-# TODO: create buttons for faster forward/back of single pumps
+# TODO: create buttons for faster forward/back of single pumps, setting a 0 position for sw endstop calculation
 # TODO: set sw endstops to better values HINT: slight increase, try experimentally
 
 import dearpygui.dearpygui as dpg
