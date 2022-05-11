@@ -42,7 +42,7 @@ class serial_ui():
             logging.info(self.portList)
         except:
             self.portList  = []
-            logging.info("no devices found.")
+            logging.info("No devices found.")
         self.SELECTED_DEVICE = ""
         self.dpg_setup()
         self.create_primary_window()
@@ -76,10 +76,6 @@ class serial_ui():
 
     def calculate_motors(self):
         # the channel speeds are multiplied with the fractional value per channel
-        # logging.info((self.syringe_diameter_1))
-        # logging.info(float(self.syringe_diameter_1))        
-        # logging.info((self.stepspeed_1))
-        # logging.info(type(self.stepspeed_1))
         stepspeed1 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_1))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm_1)))
         stepspeed2 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_2))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm_2)))
         stepspeed3 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_3))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm_3)))
@@ -93,7 +89,6 @@ class serial_ui():
     def calculate_sorting(self):
         # this is now calculated for channel 4 as standard sample channel 
         
-        # calculate_medium_for_sorting_speed = False
         self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.additional_cell_media, self.sheath_fluid, self.additional_sheath_fluid = calculate_sorting_parameters(
             float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.channel_m_per_s_4)),
             round(float(dpg.get_value(self.channel_area_sqmm_1)), 5),
@@ -119,7 +114,7 @@ class serial_ui():
 
     def save_state(self, sender, app_data, user_data):
         file_name = "pump_settings.yaml"
-        # due to floating point arithmetics, some values may appear to be "wrong"
+        # keep in mind the floating point arithmetics
         speed_position = [
             float(dpg.get_value(self.channel_m_per_s)),
             float(dpg.get_value(self.channel_m_per_s_1)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm_1)),
@@ -159,7 +154,7 @@ class serial_ui():
                 dpg.add_text(default_value="Channel 4 [mm²]", parent=text_group)
                 dpg.add_text(default_value="Please set Pump 1-4 to match 100% = 1.0", parent=text_group)
                 
-                # dpg.add_image(texture_tag="sarcura", value="sarcura.svg")
+                # dpg.add_image(texture_tag="sarcura", value="sarcura.svg") # this leads to errors during build and should be avoided
             # 100 µl sheath, 50 µl z1 / 50 µl z2, 20 µl sample = 0.1, 0.45, 0.225, 0.225
             with dpg.group() as inp_values_group:
                 self.channel_m_per_s = dpg.add_input_float(tag="channel_flow_speed",
