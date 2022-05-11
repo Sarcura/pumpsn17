@@ -40,9 +40,9 @@ jobs:
           - os: macos-latest
             TARGET: macos
             CMD_BUILD: >
-                pyinstaller -F -w -n syringepumps -i files/sarcura.icns files/gui.py &&
+                pyinstaller -F -w -n syringepumps_macos -i files/sarcura.icns files/gui.py &&
                 cd dist/ &&
-                zip -r9 syringepumps syringepumps.app/
+                zip -r9 syringepumps_macos syringepumps_macos.app/
             OUT_FILE_NAME: syringepumps_macos.zip
             ASSET_MIME: application/zip
           - os: windows-latest
