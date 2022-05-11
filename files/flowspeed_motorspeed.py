@@ -38,10 +38,10 @@ def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_r
     
     max_cell_concentration_per_ml = max_cell_per_s/channel_ml_per_s # needed for ml 
     max_cell_concentration_per_ml_max_speed = max_cell_per_s_max_speed/channel_ml_per_s # needed for ml
-    logging.info(f"The cell concentration before dilution in the sample stream is {cell_concentration_per_ml/sample_to_sheath_ratio:.2e} cells per ml")
+    logging.info(f"The cell concentration before dilution in the sample stream is {(cell_concentration_per_ml/sample_to_sheath_ratio):.2e} cells per ml")
     logging.info(f"The cell concentration before dilution in the channel is {cell_concentration_per_ml:.2e} cells per ml")
-    logging.info(f"The max cell concentration per ml for a sorting speed of {sorting_speed} Hz is: {max_cell_concentration_per_ml/sample_to_sheath_ratio:.2e} cells per ml")
-    logging.info(f"The max cell concentration per ml for a sorting speed of {max_sorting_speed} Hz is: {max_cell_concentration_per_ml_max_speed/sample_to_sheath_ratio:.2e} cells per ml")
+    logging.info(f"The max cell concentration per ml for a sorting speed of {sorting_speed} Hz is: {(max_cell_concentration_per_ml/sample_to_sheath_ratio):.2e} cells per ml")
+    logging.info(f"The max cell concentration per ml for a sorting speed of {max_sorting_speed} Hz is: {(max_cell_concentration_per_ml_max_speed/sample_to_sheath_ratio):.2e} cells per ml")
     # logging.info(f"The max cell concentration per ml for a sorting speed of {sorting_speed} Hz is: {max_cell_concentration_per_ml:.2e} cells per ml")
     # logging.info(f"The max cell concentration per ml for a sorting speed of {max_sorting_speed} Hz is: {max_cell_concentration_per_ml_max_speed:.2e} cells per ml")
 
@@ -66,7 +66,7 @@ def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_r
             additional_sheath_fluid = cell_volume_additional_ml*(1-sample_to_sheath_ratio)
             logging.info(f"Cell volume additionaly needed to sort with {sorting_speed} Hz: {additional_cell_media:.1f} ml")
             logging.info(f"Addtionally {additional_sheath_fluid:.2f} ml of sheath will be needed.")
-            logging.info(f"Sorting a cell concentration of {cell_concentration_per_ml/sorter_cap_factor/sample_to_sheath_ratio:.2e} / ml with a volume of {cell_volume_ml*sample_to_sheath_ratio} ml")
+            logging.info(f"Sorting a cell concentration of {(cell_concentration_per_ml/sorter_cap_factor/sample_to_sheath_ratio):.2e} / ml with a volume of {cell_volume_ml*sample_to_sheath_ratio} ml")
             logging.info(f"    equaling to {total_cells:.2e} total cells.")
         # cell_volume_additional_ml = 0
         else:
@@ -74,7 +74,7 @@ def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_r
             additional_sheath_fluid = cell_volume_additional_ml*(1-sample_to_sheath_ratio)
             logging.info(f"No additional dilution needed. {additional_cell_media*-1:.2f} ml of medium could have been saved.")
             logging.info(f"Addtionally {additional_sheath_fluid*-1:.2f} ml of sheath could have been saved.")
-            logging.info(f"Sorting a cell concentration of {cell_concentration_per_ml/sample_to_sheath_ratio:.2e} / ml with a volume of {cell_volume_ml*sample_to_sheath_ratio:.1f} ml")
+            logging.info(f"Sorting a cell concentration of {(cell_concentration_per_ml/sample_to_sheath_ratio):.2e} / ml with a volume of {cell_volume_ml*sample_to_sheath_ratio:.1f} ml")
             logging.info(f"    equaling to {total_cells:.2e} total cells.")
         # logging.info(f"cell events: [cell/min]: {cell_per_s}")
         cell_per_s = cell_concentration_per_µl/sorter_cap_factor*channel_µl_per_s # calculated anew with the new concentration -> is now the selected
