@@ -2,6 +2,7 @@
 # TODO: create buttons for faster forward/back of single pumps, setting a 0 position for sw endstop calculation
 # TODO: set sw endstops to better values HINT: slight increase, try experimentally
 # TODO: Progress bar would be nice to have, maybe even with ml scale
+# TODO: rename folders according to conventions https://stackoverflow.com/questions/22842691/what-is-the-meaning-of-the-dist-directory-in-open-source-projects
 
 import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
@@ -55,6 +56,28 @@ class serial_ui():
         dpg.set_primary_window(self.prime_window, True)
         while dpg.is_dearpygui_running():
             if self.my_serial.link:
+
+                # maybe use asyncio? or switch to https://github.com/BadSugar/serialGUI
+                # import asyncio
+
+                # async def tcp_echo_client(message):
+                #     reader, writer = await asyncio.open_connection(
+                #         '127.0.0.1', 8888)
+
+                #     print(f'Send: {message!r}')
+                #     writer.write(message.encode())
+                #     await writer.drain()
+
+                #     data = await reader.read(100)
+                #     print(f'Received: {data.decode()!r}')
+
+                #     print('Close the connection')
+                #     writer.close()
+                #     await writer.wait_closed()
+
+                # asyncio.run(tcp_echo_client('Hello World!'))
+                ####################################################
+
                 # logging.info(self.stepspeed)
                 pass
                 # logging.info("teensy connected")
@@ -82,10 +105,10 @@ class serial_ui():
         stepspeed3 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_3))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm_3)))
         stepspeed4 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_4))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm_4)))
         
-        self.stepspeed_1 =  int(round(stepspeed1))
-        self.stepspeed_2 =  int(round(stepspeed2))
-        self.stepspeed_3 =  int(round(stepspeed3))
-        self.stepspeed_4 =  int(round(stepspeed4))
+        self.stepspeed_1 =  int(round(stepspeed1))*dpg.get_value(self.nr_of_sorters)
+        self.stepspeed_2 =  int(round(stepspeed2))*dpg.get_value(self.nr_of_sorters)
+        self.stepspeed_3 =  int(round(stepspeed3))*dpg.get_value(self.nr_of_sorters)
+        self.stepspeed_4 =  int(round(stepspeed4))*dpg.get_value(self.nr_of_sorters)
 
     def calculate_sorting(self):
         # this is now calculated for channel 4 as standard sample channel 
@@ -148,7 +171,7 @@ class serial_ui():
     def create_send_speed(self):
         with dpg.group(horizontal=True):
             with dpg.group() as text_group:
-                dpg.add_text(default_value="Channel [m/s]", parent=text_group)
+                dpg.add_text(default_value="Sample speed [m/s]", parent=text_group)
                 dpg.add_text(default_value="Pump 1 xy sheath [m/s fraction]", parent=text_group)
                 dpg.add_text(default_value="Pump 2 z1 sheath [m/s fraction]", parent=text_group)
                 dpg.add_text(default_value="Pump 3 z2 sheath [m/s fraction]", parent=text_group)
@@ -157,7 +180,10 @@ class serial_ui():
                 dpg.add_text(default_value="Channel 2 [mm²]", parent=text_group)
                 dpg.add_text(default_value="Channel 3 [mm²]", parent=text_group)
                 dpg.add_text(default_value="Channel 4 [mm²]", parent=text_group)
-                dpg.add_text(default_value="Please set Pump 1-4 to match 100% = 1.0", parent=text_group)
+                dpg.add_text(default_value="Number of sorters", parent=text_group)
+                dpg.add_text(default_value="All pumps typically feed into the same channel,", parent=text_group)
+                dpg.add_text(default_value="so channel size 1-4 should be the same: 0.030x0.1 mm", parent=text_group)
+                dpg.add_text(default_value="Please set Pump 1-4 fraction to match 100% = 1.0", parent=text_group)
                 
                 # dpg.add_image(texture_tag="sarcura", value="sarcura.svg") # this leads to errors during build and should be avoided
             # 100 µl sheath, 50 µl z1 / 50 µl z2, 20 µl sample = 0.1, 0.45, 0.225, 0.225
@@ -189,6 +215,9 @@ class serial_ui():
                 self.channel_area_sqmm_4 = dpg.add_input_float(tag="channel_area_sqmm_4",
                         default_value=0.003, max_value=100, width=180,
                         parent=inp_values_group)
+                self.nr_of_sorters = dpg.add_input_int(tag="nr_of_sorters",
+                        default_value=1, max_value=100, width=180,
+                        parent=inp_values_group)
                 with dpg.group(horizontal=True):
                     dpg.add_button(label="Save Data", callback=self.save_state, tag="save_data")
                     dpg.add_button(label="Load Data", callback=self.load_state, tag="load_data")
@@ -211,17 +240,17 @@ class serial_ui():
         dpg.add_separator()
 
         with dpg.group(horizontal=True) as send_group:
-            dpg.add_button(tag="sendSpeedBtn", label="Start Pumps",
+            dpg.add_button(tag="sendSpeedBtn", label="Start system",
                 callback=self.send_speed_to_arduino, parent=send_group)
-            dpg.add_button(tag="sendSpeedBtn05ms", user_data={"speed": 0.5}, label="Set Pumps to 0.5 m/s",
+            dpg.add_button(tag="sendSpeedBtn05ms", user_data={"speed": 0.5}, label="Set system to 0.5 m/s",
                 callback=self.send_speed_to_arduino, parent=send_group)
-            dpg.add_button(tag="sendSpeedBtn10ms", user_data={"speed": 1.0}, label="Set Pumps to 1 m/s",
+            dpg.add_button(tag="sendSpeedBtn10ms", user_data={"speed": 1.0}, label="Set system to 1 m/s",
                 callback=self.send_speed_to_arduino, parent=send_group)
-            dpg.add_button(tag="sendSpeedBtn15ms", user_data={"speed": 1.5}, label="Set Pumps to 1.5 m/s",
+            dpg.add_button(tag="sendSpeedBtn15ms", user_data={"speed": 1.5}, label="Set system to 1.5 m/s",
                 callback=self.send_speed_to_arduino, parent=send_group)
-            dpg.add_button(tag="sendSpeedBtn20ms", user_data={"speed": 2}, label="Set Pumps to 2 m/s",
+            dpg.add_button(tag="sendSpeedBtn20ms", user_data={"speed": 2}, label="Set system to 2 m/s",
                 callback=self.send_speed_to_arduino, parent=send_group)
-            dpg.add_button(tag="sendSet0", user_data={"go_to_endstops" : True}, label="Go Back to Zero",
+            dpg.add_button(tag="sendSet0", user_data={"go_to_endstops" : True}, label="Run back motors to software 0",
                 callback=self.send_speed_to_arduino, parent=send_group)
             dpg.add_button(tag="sendStop", user_data={"set_speed_zero" : True}, label="Stop Pumps",
                 callback=self.send_speed_to_arduino, parent=send_group)
@@ -281,7 +310,7 @@ class serial_ui():
                     dpg.add_button(label="Calculate Sorting", callback=self.calculate_sorting, tag="calculate_sorting")
                     dpg.bind_item_theme(dpg.last_item(), "__demo_theme")
 
-        dpg.add_checkbox(label="Calculate medium and sorting time for selected sorting speed.", tag="medium_calculation")
+        dpg.add_checkbox(label="Calculate medium and sorting time for selected sorting speed per sorter.", tag="medium_calculation")
         dpg.add_separator()
 
         # width, height, channels, data = dpg.load_image("sarcura.png") 
@@ -340,7 +369,7 @@ class serial_ui():
     def dpg_setup(self):
         dpg.create_context()
         windowWidth  = 1100
-        windowHeight = 335
+        windowHeight = 435
         dpg.create_viewport(title='Syringe Pump Control', width=windowWidth, height=windowHeight)
         dpg.setup_dearpygui()
 

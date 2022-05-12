@@ -453,12 +453,11 @@ def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_r
   pip install -r -requirements.txt
   #+END_SRC
 
-* After modification, to create an executable with pyinstaller use on of the following commands:
+* After forking the git & modification
+to create an executable with pyinstaller just push a tag named like "v*", for instance "v0.1.1":
+The github workflow will create distributables for Windows, MacOS and Linux.
 
-  #+BEGIN_SRC C :exports code      
-  pyinstaller --python-option 3.9 .\pyserial_gui.spec --onefile --icon=sarcura.ico
-  pyinstaller --onefile --i sarcura.ico .\gui.py
-  pyinstaller --onefile --i sarcura.ico -w .\gui.py
+  #+BEGIN_SRC git :exports code      
+  git push origin --tags
   #+END_SRC
 
-or use pip installed auto-py-to-exe and create it via GUI

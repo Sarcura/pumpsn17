@@ -73,6 +73,23 @@ class Arduino:
         # not implemented
         pass
 
+    # def connect(self, port) -> bool:
+    #     baud_rate    = self.baud_rate
+    #     time_to_wait = self.time_to_wait
+    #     self.ser     = serial.Serial(port=port, baudrate=baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE,
+    #             bytesize=serial.EIGHTBITS, timeout=time_to_wait)
+    #     if not self.ser:
+    #         print("Can't connect to |%s|" % (port))
+    #         return False
+    #     print("Connected to |%s|" % (port) )
+    #     self.connected = True
+    #     return True
+
+    # untested reading
+    def read_serial(self) -> str:
+        # return self.link.read_all()
+        return self.link.available()
+
     def send_to_arduino(self, data_list):
         try:
             # reset send_size
