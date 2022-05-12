@@ -100,10 +100,10 @@ class serial_ui():
 
     def calculate_motors(self):
         # the channel speeds are multiplied with the fractional value per channel
-        stepspeed1 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_1))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm_1)))
-        stepspeed2 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_2))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm_2)))
-        stepspeed3 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_3))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm_3)))
-        stepspeed4 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_4))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm_4)))
+        stepspeed1 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_1))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm)))
+        stepspeed2 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_2))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm)))
+        stepspeed3 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_3))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm)))
+        stepspeed4 = calculate_stepspeed(float(dpg.get_value(self.channel_m_per_s_4))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm)))
         
         self.stepspeed_1 =  int(round(stepspeed1))*dpg.get_value(self.nr_of_sorters)
         self.stepspeed_2 =  int(round(stepspeed2))*dpg.get_value(self.nr_of_sorters)
@@ -115,7 +115,7 @@ class serial_ui():
         
         self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.additional_cell_media, self.sheath_fluid, self.additional_sheath_fluid = calculate_sorting_parameters(
             float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.channel_m_per_s_4)),
-            round(float(dpg.get_value(self.channel_area_sqmm_1)), 5),
+            round(float(dpg.get_value(self.channel_area_sqmm)), 5),
             int(dpg.get_value(self.cell_concentration_per_ml)), float(dpg.get_value(self.cell_volume_ml)),
             float(dpg.get_value(self.sorting_speed)), float(dpg.get_value(self.max_sorting_speed)),
             float(dpg.get_value(self.maximum_sorting_time)), dpg.get_value(item="medium_calculation")
@@ -145,10 +145,10 @@ class serial_ui():
         # keep in mind the floating point arithmetics
         speed_position = [
             float(dpg.get_value(self.channel_m_per_s)),
-            float(dpg.get_value(self.channel_m_per_s_1)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm_1)),
-            float(dpg.get_value(self.channel_m_per_s_2)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm_2)),
-            float(dpg.get_value(self.channel_m_per_s_3)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm_3)),
-            float(dpg.get_value(self.channel_m_per_s_4)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm_4)),
+            float(dpg.get_value(self.channel_m_per_s_1)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm)),
+            float(dpg.get_value(self.channel_m_per_s_2)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm)),
+            float(dpg.get_value(self.channel_m_per_s_3)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm)),
+            float(dpg.get_value(self.channel_m_per_s_4)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm)),
         ]
         logging.info(speed_position)
         with open(file_name, 'w+') as f:
@@ -163,10 +163,10 @@ class serial_ui():
             speed_position = doc
         
         dpg.set_value(self.channel_m_per_s, speed_position[0])
-        dpg.set_value(self.channel_m_per_s_1, speed_position[1]), dpg.set_value(self.syringe_diameter_1, speed_position[2]), dpg.set_value(self.channel_area_sqmm_1, speed_position[3]),
-        dpg.set_value(self.channel_m_per_s_2, speed_position[4]), dpg.set_value(self.syringe_diameter_2, speed_position[5]), dpg.set_value(self.channel_area_sqmm_2, speed_position[6]),
-        dpg.set_value(self.channel_m_per_s_3, speed_position[7]), dpg.set_value(self.syringe_diameter_3, speed_position[8]), dpg.set_value(self.channel_area_sqmm_3, speed_position[9]),
-        dpg.set_value(self.channel_m_per_s_4, speed_position[10]), dpg.set_value(self.syringe_diameter_4, speed_position[11]), dpg.set_value(self.channel_area_sqmm_4, speed_position[12])
+        dpg.set_value(self.channel_m_per_s_1, speed_position[1]), dpg.set_value(self.syringe_diameter_1, speed_position[2]), dpg.set_value(self.channel_area_sqmm, speed_position[3]),
+        dpg.set_value(self.channel_m_per_s_2, speed_position[4]), dpg.set_value(self.syringe_diameter_2, speed_position[5]), dpg.set_value(self.channel_area_sqmm, speed_position[6]),
+        dpg.set_value(self.channel_m_per_s_3, speed_position[7]), dpg.set_value(self.syringe_diameter_3, speed_position[8]), dpg.set_value(self.channel_area_sqmm, speed_position[9]),
+        dpg.set_value(self.channel_m_per_s_4, speed_position[10]), dpg.set_value(self.syringe_diameter_4, speed_position[11]), dpg.set_value(self.channel_area_sqmm, speed_position[12])
 
     def create_send_speed(self):
         with dpg.group(horizontal=True):
@@ -176,13 +176,8 @@ class serial_ui():
                 dpg.add_text(default_value="Pump 2 z1 sheath [m/s fraction]", parent=text_group)
                 dpg.add_text(default_value="Pump 3 z2 sheath [m/s fraction]", parent=text_group)
                 dpg.add_text(default_value="Pump 4 sample [m/s fraction]", parent=text_group)
-                dpg.add_text(default_value="Channel 1 [mm²]", parent=text_group)
-                dpg.add_text(default_value="Channel 2 [mm²]", parent=text_group)
-                dpg.add_text(default_value="Channel 3 [mm²]", parent=text_group)
-                dpg.add_text(default_value="Channel 4 [mm²]", parent=text_group)
+                dpg.add_text(default_value="Sample channel size [mm²]", parent=text_group)
                 dpg.add_text(default_value="Number of sorters", parent=text_group)
-                dpg.add_text(default_value="All pumps typically feed into the same channel,", parent=text_group)
-                dpg.add_text(default_value="so channel size 1-4 should be the same: 0.030x0.1 mm", parent=text_group)
                 dpg.add_text(default_value="Please set Pump 1-4 fraction to match 100% = 1.0", parent=text_group)
                 
                 # dpg.add_image(texture_tag="sarcura", value="sarcura.svg") # this leads to errors during build and should be avoided
@@ -203,16 +198,7 @@ class serial_ui():
                 self.channel_m_per_s_4 = dpg.add_input_float(tag="flow_speed_pump_4", #z2 sheath
                         default_value=0.1, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_area_sqmm_1 = dpg.add_input_float(tag="channel_area_sqmm_1",
-                        default_value=0.003, max_value=100, width=180,
-                        parent=inp_values_group)
-                self.channel_area_sqmm_2 = dpg.add_input_float(tag="channel_area_sqmm_2",
-                        default_value=0.003, max_value=100, width=180,
-                        parent=inp_values_group)
-                self.channel_area_sqmm_3 = dpg.add_input_float(tag="channel_area_sqmm_3",
-                        default_value=0.003, max_value=100, width=180,
-                        parent=inp_values_group)
-                self.channel_area_sqmm_4 = dpg.add_input_float(tag="channel_area_sqmm_4",
+                self.channel_area_sqmm = dpg.add_input_float(tag="channel_area_sqmm",
                         default_value=0.003, max_value=100, width=180,
                         parent=inp_values_group)
                 self.nr_of_sorters = dpg.add_input_int(tag="nr_of_sorters",
