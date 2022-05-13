@@ -457,7 +457,8 @@ def calculate_sorting_parameters(channel_m_per_s_total = 1.5, sample_to_sheath_r
 to create an executable with pyinstaller just push a tag named like "v*", for instance "v0.1.1":
 The github workflow will create distributables for Windows, MacOS and Linux.
 
-  #+BEGIN_SRC git :exports code      
+  #+BEGIN_SRC git :exports code 
+  git tag v1.2.1  
   git push origin --tags
   #+END_SRC
 
