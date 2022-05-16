@@ -1,8 +1,10 @@
 
-# TODO: create buttons for faster forward/back of single pumps, setting a 0 position for sw endstop calculation
-# TODO: set sw endstops to better values HINT: slight increase, try experimentally
-# TODO: Progress bar would be nice to have, maybe even with ml scale
+# ! TODO: create buttons for fast forward/back of single pumps, setting a 0 position for sw endstop calculation
+# TODO: create automated switching on/off for all channels with timing variable
+# TODO: set sw endstops to better values HINT: slight increase, try experimentally - changed  from 1e6 to 1.1e6 
+# TODO: Progress bar would be nice to have, maybe even with ml scale - should be related to calculated time and update on?
 # TODO: rename folders according to conventions https://stackoverflow.com/questions/22842691/what-is-the-meaning-of-the-dist-directory-in-open-source-projects
+# TODO: create an input script for flowspeed-motorspeed to produce a graph for output parameters
 
 import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
@@ -33,7 +35,7 @@ class serial_ui():
         self.position_2 = 100000
         self.position_3 = 100000
         self.position_4 = 100000
-        self.sw_endstop = 1000000
+        self.sw_endstop = 1100000
         self.motor0_direction, self.motor1_direction, self.motor2_direction, self.motor3_direction = 0, 0, 0, 0
         self.motor0_enable, self.motor1_enable, self.motor2_enable, self.motor3_enable = 0, 0, 0, 0 # enable on low = 0
         self.my_serial = Arduino(findusbport_hwid="16C0:0483")
@@ -173,6 +175,20 @@ class serial_ui():
         dpg.set_value(self.channel_ratio_3, speed_position[7]), dpg.set_value(self.syringe_diameter_3, speed_position[8]), dpg.set_value(self.channel_area_sqmm, speed_position[9]),
         dpg.set_value(self.channel_ratio_4, speed_position[10]), dpg.set_value(self.syringe_diameter_4, speed_position[11]), dpg.set_value(self.channel_area_sqmm, speed_position[12])
 
+
+    def create_setup(self):
+        with dpg.group(label="pump_setup"):
+            pumplist = [1,2,3,4]
+            dpg.add_text(default_value=f"Please setup pumps and reconnect device afterwards.")
+            for element in pumplist:
+                with dpg.group(horizontal=True, parent=element):
+                    dpg.add_text(default_value=f"Pump {element} control")
+                    dpg.add_button(label="<<", user_data=[f"pump", element, "fast_backward"], callback=self.send_speed_to_arduino, tag=f"fast_backward_pump_{element}")
+                    dpg.add_button(label="<", user_data=[f"pump", element, "normal_backward"], callback=self.send_speed_to_arduino, tag=f"normal_backward_pump_{element}")
+                    dpg.add_button(label="||", user_data=[f"pump", element, "stop"], callback=self.send_speed_to_arduino, tag=f"stop_pump_{element}")
+                    dpg.add_button(label=">", user_data=[f"pump", element, "normal_forward"], callback=self.send_speed_to_arduino, tag=f"normal_forward_pump_{element}")
+                    dpg.add_button(label=">>", user_data=[f"pump", element, "fast_forward"], callback=self.send_speed_to_arduino, tag=f"fast_forward_pump_{element}")
+
     def create_send_speed(self):
         with dpg.group(horizontal=True):
             with dpg.group() as text_group:
@@ -247,6 +263,15 @@ class serial_ui():
                 callback=self.send_speed_to_arduino, parent=send_group)
 
         dpg.add_separator()
+
+    def create_automate(self):
+        pass
+        with dpg.group():
+            dpg.add_checkbox(label="Automate Pump 1.", tag="automate_1")
+            dpg.add_checkbox(label="Automate Pump 2.", tag="automate_2")
+            dpg.add_checkbox(label="Automate Pump 3.", tag="automate_3")
+            dpg.add_checkbox(label="Automate Pump 4.", tag="automate_4")
+
 
     def create_calculate(self):
         with dpg.group(horizontal=True):
@@ -352,6 +377,9 @@ class serial_ui():
                             dpg.add_listbox(self.portList, tag="__listPortsTag",
                                 width=300, num_items=2,
                                 callback=self.selected_port_callback)
+                with dpg.tab(label="Setup"):
+                    self.create_setup()
+
                 with dpg.tab(label="Pumps"):
                     self.create_send_speed()
 
@@ -422,7 +450,65 @@ class serial_ui():
                     self.motor1_enable, self.motor1_direction, self.position_2, 0, 
                     self.motor2_enable, self.motor2_direction, self.position_3, 0,
                     self.motor3_enable, self.motor3_direction, self.position_4, 0]
-        logging.info(data_list)
+
+            if "pump" and "fast_forward" in user_data:
+                element = user_data[1]*4-1
+                print(f"Moving pump {element} fast_forward")
+                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
+                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
+                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
+                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
+                #only the according pump is set
+                data_list[element] = self.max_speed
+
+            if "pump" and "normal_forward" in user_data:
+                element = user_data[1]*4-1
+                print(f"Moving pump {element} fast_forward")
+                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
+                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
+                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
+                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
+                #only the according pump is set
+                data_list[element] = int(self.max_speed/2)
+
+            if "pump" and "stop" in user_data:
+                print("stop")
+                print(user_data[1])
+                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
+                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
+                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
+                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
+
+            if "pump" and "normal_backward" in user_data:
+                element = user_data[1]*4-1
+                print(f"Moving pump {element} fast_backward")
+                # position needs to be negative
+                self.position_1, self.position_2, self.position_3, self.position_4 = -self.sw_endstop, -self.sw_endstop, -self.sw_endstop, -self.sw_endstop
+                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
+                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
+                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
+                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
+                #only the according pump is set
+                data_list[element] = int(self.max_speed/2)
+
+            if "pump" and "fast_backward" in user_data:
+                element = user_data[1]*4-1
+                print(f"Moving pump {element} fast_backward")
+                # position needs to be negative
+                self.position_1, self.position_2, self.position_3, self.position_4 = -self.sw_endstop, -self.sw_endstop, -self.sw_endstop, -self.sw_endstop
+                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
+                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
+                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
+                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
+                #only the according pump is set
+                data_list[element] = self.max_speed
+
+            # dpg.add_button(label=">>", user_data={f"pump{element}": "fast_forward"}, callback=self.send_speed_to_arduino, tag=f"fast_forward_pump_{element}")
+
+        if data_list:
+            logging.info(data_list)
+        else:
+            logging.info("unexpected data_list, nothing to send")
         self.my_serial.send_to_arduino(data_list)
 
     # def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
