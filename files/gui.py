@@ -113,8 +113,10 @@ class serial_ui():
     def calculate_sorting(self):
         # this is now calculated for channel 4 as standard sample channel 
         
+        self.calculate_cannel_ratios()
+
         self.channel_µl_per_s, self.cell_per_s, self.total_sorting_time, self.additional_cell_media, self.sheath_fluid, self.additional_sheath_fluid = calculate_sorting_parameters(
-            float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.channel_ratio_4)),
+            float(dpg.get_value(self.channel_m_per_s)), float(self.channel_ratio_4),
             round(float(dpg.get_value(self.channel_area_sqmm)), 5),
             int(dpg.get_value(self.cell_concentration_per_ml)), float(dpg.get_value(self.cell_volume_ml)),
             float(dpg.get_value(self.sorting_speed)), float(dpg.get_value(self.max_sorting_speed)),
@@ -122,9 +124,8 @@ class serial_ui():
         )
 
         output1 = f"Sample speed in channel [µl/s]: {self.channel_µl_per_s}, [Cells/s]: {self.cell_per_s}, Sorting duration [h]: {self.total_sorting_time}"
-        output2 = f"Additionally needed cell media [ml]: {self.additional_cell_media}, Total needed sheath fluid [ml]: {self.sheath_fluid+self.additional_sheath_fluid}"
-        
-        self.calculate_cannel_ratios()
+        output2 = f"Additionally needed cell media [ml]: {self.additional_cell_media}, Total needed sheath fluid [ml]: {round(self.sheath_fluid+self.additional_sheath_fluid, 2)}"
+
         self.ul_xy_per_s = round((self.channel_ratio_1)*self.channel_µl_per_s, 2)
         self.ul_z1_per_s = round((self.channel_ratio_2)*self.channel_µl_per_s, 2)
         self.ul_z2_per_s = round((self.channel_ratio_3)*self.channel_µl_per_s, 2)
