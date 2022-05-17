@@ -98,11 +98,12 @@ class serial_ui():
         self.dpg_cleanup()
 
     def calculate_motors(self):
+        self.calculate_cannel_ratios()
         # the channel speeds are multiplied with the fractional value per channel
-        stepspeed1 = calculate_stepspeed(float(dpg.get_value(self.channel_ratio_1))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm)))
-        stepspeed2 = calculate_stepspeed(float(dpg.get_value(self.channel_ratio_2))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm)))
-        stepspeed3 = calculate_stepspeed(float(dpg.get_value(self.channel_ratio_3))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm)))
-        stepspeed4 = calculate_stepspeed(float(dpg.get_value(self.channel_ratio_4))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm)))
+        stepspeed1 = calculate_stepspeed(float(self.channel_ratio_1)*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm)))
+        stepspeed2 = calculate_stepspeed(float(self.channel_ratio_2)*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm)))
+        stepspeed3 = calculate_stepspeed(float(self.channel_ratio_3)*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm)))
+        stepspeed4 = calculate_stepspeed(float(self.channel_ratio_4)*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm)))
         
         self.data_list['stepspeed_1'] = int(round(stepspeed1))*dpg.get_value(self.nr_of_sorters)
         self.data_list['stepspeed_2'] = int(round(stepspeed2))*dpg.get_value(self.nr_of_sorters)
@@ -122,10 +123,12 @@ class serial_ui():
 
         output1 = f"Sample speed in channel [µl/s]: {self.channel_µl_per_s}, [Cells/s]: {self.cell_per_s}, Sorting duration [h]: {self.total_sorting_time}"
         output2 = f"Additionally needed cell media [ml]: {self.additional_cell_media}, Total needed sheath fluid [ml]: {self.sheath_fluid+self.additional_sheath_fluid}"
-        self.ul_xy_per_s = round(dpg.get_value(self.channel_ratio_1)*self.channel_µl_per_s, 2)
-        self.ul_z1_per_s = round(dpg.get_value(self.channel_ratio_2)*self.channel_µl_per_s, 2)
-        self.ul_z2_per_s = round(dpg.get_value(self.channel_ratio_3)*self.channel_µl_per_s, 2)
-        self.ul_sample_per_s = round(dpg.get_value(self.channel_ratio_4)*self.channel_µl_per_s, 2)
+        
+        self.calculate_cannel_ratios()
+        self.ul_xy_per_s = round((self.channel_ratio_1)*self.channel_µl_per_s, 2)
+        self.ul_z1_per_s = round((self.channel_ratio_2)*self.channel_µl_per_s, 2)
+        self.ul_z2_per_s = round((self.channel_ratio_3)*self.channel_µl_per_s, 2)
+        self.ul_sample_per_s = round((self.channel_ratio_4)*self.channel_µl_per_s, 2)
         output3 = f"Channel xy, z1, z2 & sample [µl/s]: {self.ul_xy_per_s, self.ul_z1_per_s, self.ul_z2_per_s, self.ul_sample_per_s}"
         dpg.set_value("sorting_simulation1", output1)
         dpg.set_value("sorting_simulation2", output2)
@@ -149,10 +152,10 @@ class serial_ui():
         # keep in mind the floating point arithmetics
         speed_position = [
             float(dpg.get_value(self.channel_m_per_s)),
-            float(dpg.get_value(self.channel_ratio_1)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm)),
-            float(dpg.get_value(self.channel_ratio_2)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm)),
-            float(dpg.get_value(self.channel_ratio_3)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm)),
-            float(dpg.get_value(self.channel_ratio_4)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm)),
+            float(dpg.get_value(self.channel_value_1)), float(dpg.get_value(self.syringe_diameter_1)), float(dpg.get_value(self.channel_area_sqmm)),
+            float(dpg.get_value(self.channel_value_2)), float(dpg.get_value(self.syringe_diameter_2)), float(dpg.get_value(self.channel_area_sqmm)),
+            float(dpg.get_value(self.channel_value_3)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm)),
+            float(dpg.get_value(self.channel_value_4)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm)),
         ]
         logging.info(speed_position)
         with open(file_name, 'w+') as f:
@@ -167,10 +170,10 @@ class serial_ui():
             speed_position = doc
         
         dpg.set_value(self.channel_m_per_s, speed_position[0])
-        dpg.set_value(self.channel_ratio_1, speed_position[1]), dpg.set_value(self.syringe_diameter_1, speed_position[2]), dpg.set_value(self.channel_area_sqmm, speed_position[3]),
-        dpg.set_value(self.channel_ratio_2, speed_position[4]), dpg.set_value(self.syringe_diameter_2, speed_position[5]), dpg.set_value(self.channel_area_sqmm, speed_position[6]),
-        dpg.set_value(self.channel_ratio_3, speed_position[7]), dpg.set_value(self.syringe_diameter_3, speed_position[8]), dpg.set_value(self.channel_area_sqmm, speed_position[9]),
-        dpg.set_value(self.channel_ratio_4, speed_position[10]), dpg.set_value(self.syringe_diameter_4, speed_position[11]), dpg.set_value(self.channel_area_sqmm, speed_position[12])
+        dpg.set_value(self.channel_value_1, speed_position[1]), dpg.set_value(self.syringe_diameter_1, speed_position[2]), dpg.set_value(self.channel_area_sqmm, speed_position[3]),
+        dpg.set_value(self.channel_value_2, speed_position[4]), dpg.set_value(self.syringe_diameter_2, speed_position[5]), dpg.set_value(self.channel_area_sqmm, speed_position[6]),
+        dpg.set_value(self.channel_value_3, speed_position[7]), dpg.set_value(self.syringe_diameter_3, speed_position[8]), dpg.set_value(self.channel_area_sqmm, speed_position[9]),
+        dpg.set_value(self.channel_value_4, speed_position[10]), dpg.set_value(self.syringe_diameter_4, speed_position[11]), dpg.set_value(self.channel_area_sqmm, speed_position[12])
 
 
     def create_setup(self):
@@ -196,7 +199,7 @@ class serial_ui():
                 dpg.add_text(default_value="Pump 4 sample [m/s fraction]", parent=text_group)
                 dpg.add_text(default_value="Sample channel size [mm²]", parent=text_group)
                 dpg.add_text(default_value="Number of sorters", parent=text_group)
-                dpg.add_text(default_value="Please set Pump 1-4 fraction to match 100% = 1.0", parent=text_group)
+                dpg.add_text(default_value="Save/Load Values:", parent=text_group)
                 
                 # dpg.add_image(texture_tag="sarcura", value="sarcura.svg") # this leads to errors during build and should be avoided
             # 100 µl sheath, 50 µl z1 / 50 µl z2, 20 µl sample = 0.1, 0.45, 0.225, 0.225
@@ -204,16 +207,16 @@ class serial_ui():
                 self.channel_m_per_s = dpg.add_input_float(tag="channel_flow_speed",
                         default_value=1, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_ratio_1 = dpg.add_input_float(tag="flow_speed_pump_1", # sample
+                self.channel_value_1 = dpg.add_input_float(tag="flow_speed_pump_1", # sample
                         default_value=0.45, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_ratio_2 = dpg.add_input_float(tag="flow_speed_pump_2", # xy sheath
+                self.channel_value_2 = dpg.add_input_float(tag="flow_speed_pump_2", # xy sheath
                         default_value=0.225, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_ratio_3 = dpg.add_input_float(tag="flow_speed_pump_3", # z1 sheath
+                self.channel_value_3 = dpg.add_input_float(tag="flow_speed_pump_3", # z1 sheath
                         default_value=0.225, max_value=3, width=180,
                         parent=inp_values_group)
-                self.channel_ratio_4 = dpg.add_input_float(tag="flow_speed_pump_4", #z2 sheath
+                self.channel_value_4 = dpg.add_input_float(tag="flow_speed_pump_4", #z2 sheath
                         default_value=0.1, max_value=3, width=180,
                         parent=inp_values_group)
                 self.channel_area_sqmm = dpg.add_input_float(tag="channel_area_sqmm",
@@ -312,8 +315,7 @@ class serial_ui():
                 # self.sorting_speed Hz
                 # self.max_sorting_speed Hz, heater capability
                 # self.maximum_sorting_time Maximum amount of hours a full sorting is allowed to take
-                # ! self.sorting_simulation = {"Sample": self.channel_ratio_1, "Sheath_xy": self.channel_ratio_2, "Sheath_z1": self.channel_ratio_3, "Sheath_z2": self.channel_ratio_4}
-
+                
                 with dpg.group(horizontal=True):
                     with dpg.theme(tag="__demo_theme"):
                         with dpg.theme_component(dpg.mvButton):
@@ -415,6 +417,17 @@ class serial_ui():
 
     def exit_callback(self):
         dpg.stop_dearpygui()
+
+    def calculate_cannel_ratios(self):
+        channel_value_1 = dpg.get_value(item="flow_speed_pump_1")
+        channel_value_2 = dpg.get_value(item="flow_speed_pump_2")
+        channel_value_3 = dpg.get_value(item="flow_speed_pump_3")
+        channel_value_4 = dpg.get_value(item="flow_speed_pump_4")
+        channel_combined_value = channel_value_1+channel_value_2+channel_value_3+channel_value_4
+        self.channel_ratio_1 = channel_value_1/channel_combined_value
+        self.channel_ratio_2 = channel_value_2/channel_combined_value
+        self.channel_ratio_3 = channel_value_3/channel_combined_value
+        self.channel_ratio_4 = channel_value_4/channel_combined_value
 
     def send_speed_to_arduino(self, sender, app_data, user_data):
         # overwrite the last settings with the standard position to go
