@@ -1,7 +1,7 @@
 
-# ! TODO: create buttons for fast forward/back of single pumps, setting a 0 position for sw endstop calculation
 # TODO: create automated switching on/off for all channels with timing variable
-# TODO: set sw endstops to better values HINT: slight increase, try experimentally - changed  from 1e6 to 1.1e6 
+# TODO: setting a new 0 position after setup for sw endstop calculation
+# TODO: test sw endstops at better values HINT: slight increase, try experimentally - changed  from 1e6 to 1.1e6 
 # TODO: Progress bar would be nice to have, maybe even with ml scale - should be related to calculated time and update on?
 # TODO: rename folders according to conventions https://stackoverflow.com/questions/22842691/what-is-the-meaning-of-the-dist-directory-in-open-source-projects
 # TODO: create an input script for flowspeed-motorspeed to produce a graph for output parameters
@@ -26,18 +26,25 @@ class serial_ui():
     SERVER_THEME = None
 
     def __init__(self):
-        self.stepspeed_1 = 0
-        self.stepspeed_2 = 0
-        self.stepspeed_3 = 0
-        self.stepspeed_4 = 0
-        self.max_speed = 15000
+        self.motor0_enable, self.motor1_enable, self.motor2_enable, self.motor3_enable = 0, 0, 0, 0 # enable on low = 0
+        self.motor0_direction, self.motor1_direction, self.motor2_direction, self.motor3_direction = 0, 0, 0, 0
         self.position_1 = 100000
         self.position_2 = 100000
         self.position_3 = 100000
         self.position_4 = 100000
+        self.stepspeed_1 = 0
+        self.stepspeed_2 = 0
+        self.stepspeed_3 = 0
+        self.stepspeed_4 = 0
+        # alternative list:
+        self.data_list = {"motor0_enable": 0, "motor0_direction": 0, "position_1": 100000, "stepspeed_1": 0, 
+            "motor1_enable": 0, "motor1_direction": 0, "position_2": 100000, "stepspeed_2": 0, 
+            "motor2_enable": 0, "motor2_direction": 0, "position_3": 100000, "stepspeed_3": 0,
+            "motor3_enable": 0, "motor3_direction": 0, "position_4": 100000, "stepspeed_4": 0}
+
         self.sw_endstop = 1100000
-        self.motor0_direction, self.motor1_direction, self.motor2_direction, self.motor3_direction = 0, 0, 0, 0
-        self.motor0_enable, self.motor1_enable, self.motor2_enable, self.motor3_enable = 0, 0, 0, 0 # enable on low = 0
+        self.max_speed = 15000
+
         self.my_serial = Arduino(findusbport_hwid="16C0:0483")
         # self.update_ports_callback()
         # self.my_serial.hwid =  # should be changed by dropdown to search teensy, ardunio..
@@ -111,6 +118,11 @@ class serial_ui():
         self.stepspeed_2 =  int(round(stepspeed2))*dpg.get_value(self.nr_of_sorters)
         self.stepspeed_3 =  int(round(stepspeed3))*dpg.get_value(self.nr_of_sorters)
         self.stepspeed_4 =  int(round(stepspeed4))*dpg.get_value(self.nr_of_sorters)
+
+        self.data_list['stepspeed_1'] = int(round(stepspeed1))*dpg.get_value(self.nr_of_sorters)
+        self.data_list['stepspeed_2'] = int(round(stepspeed2))*dpg.get_value(self.nr_of_sorters)
+        self.data_list['stepspeed_3'] = int(round(stepspeed3))*dpg.get_value(self.nr_of_sorters)
+        self.data_list['stepspeed_4'] = int(round(stepspeed4))*dpg.get_value(self.nr_of_sorters)
 
     def calculate_sorting(self):
         # this is now calculated for channel 4 as standard sample channel 
@@ -422,8 +434,14 @@ class serial_ui():
     def send_speed_to_arduino(self, sender, app_data, user_data):
         self.position_1, self.position_2, self.position_3, self.position_4 = self.sw_endstop, self.sw_endstop, self.sw_endstop, self.sw_endstop
 
+        self.data_list['position_1'] = self.sw_endstop
+        self.data_list['position_2'] = self.sw_endstop
+        self.data_list['position_3'] = self.sw_endstop
+        self.data_list['position_4'] = self.sw_endstop
+
         if user_data is None:
             self.calculate_motors()
+
             data_list = [self.motor0_enable, self.motor0_direction, self.position_1, self.stepspeed_1, 
                 self.motor1_enable, self.motor1_direction, self.position_2, self.stepspeed_2, 
                 self.motor2_enable, self.motor2_direction, self.position_3, self.stepspeed_3,
@@ -437,7 +455,13 @@ class serial_ui():
                     self.motor2_enable, self.motor2_direction, self.position_3, self.stepspeed_3,
                     self.motor3_enable, self.motor3_direction, self.position_4, self.stepspeed_4]
             if "go_to_endstops" in user_data and user_data["go_to_endstops"] == True:
+
                 self.position_1, self.position_2, self.position_3, self.position_4 = 0, 0, 0, 0
+                self.data_list['position_1'] = 0
+                self.data_list['position_2'] = 0
+                self.data_list['position_3'] = 0
+                self.data_list['position_4'] = 0
+
                 data_list = [self.motor0_enable, self.motor0_direction, self.position_1, self.max_speed, 
                     self.motor1_enable, self.motor1_direction, self.position_2, self.max_speed, 
                     self.motor2_enable, self.motor2_direction, self.position_3, self.max_speed,
@@ -446,11 +470,17 @@ class serial_ui():
                 # disable on high, but not connected in hardware (?!)
                 # self.motor0_enable, self.motor1_enable, self.motor2_enable, self.motor3_enable = 1, 1, 1, 1
                 self.position_1, self.position_2, self.position_3, self.position_4 = 0, 0, 0, 0
+                self.data_list['position_1'] = 0
+                self.data_list['position_2'] = 0
+                self.data_list['position_3'] = 0
+                self.data_list['position_4'] = 0
+
                 data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
                     self.motor1_enable, self.motor1_direction, self.position_2, 0, 
                     self.motor2_enable, self.motor2_direction, self.position_3, 0,
                     self.motor3_enable, self.motor3_direction, self.position_4, 0]
 
+            # TODO: insert list
             if "pump" and "fast_forward" in user_data:
                 element = user_data[1]*4-1
                 print(f"Moving pump {element} fast_forward")
@@ -459,7 +489,15 @@ class serial_ui():
                     self.motor2_enable, self.motor2_direction, self.position_3, 0,
                     self.motor3_enable, self.motor3_direction, self.position_4, 0]
                 #only the according pump is set
+                
                 data_list[element] = self.max_speed
+
+                self.data_list['stepspeed_1'] = 0
+                self.data_list['stepspeed_2'] = 0
+                self.data_list['stepspeed_3'] = 0
+                self.data_list['stepspeed_4'] = 0
+                self.data_list[f'stepspeed_{element}'] = self.max_speed
+
 
             if "pump" and "normal_forward" in user_data:
                 element = user_data[1]*4-1
@@ -470,6 +508,11 @@ class serial_ui():
                     self.motor3_enable, self.motor3_direction, self.position_4, 0]
                 #only the according pump is set
                 data_list[element] = int(self.max_speed/2)
+                self.data_list['stepspeed_1'] = 0
+                self.data_list['stepspeed_2'] = 0
+                self.data_list['stepspeed_3'] = 0
+                self.data_list['stepspeed_4'] = 0
+                self.data_list[f'stepspeed_{element}'] = self.max_speed/2
 
             if "pump" and "stop" in user_data:
                 print("stop")
@@ -478,6 +521,10 @@ class serial_ui():
                     self.motor1_enable, self.motor1_direction, self.position_2, 0, 
                     self.motor2_enable, self.motor2_direction, self.position_3, 0,
                     self.motor3_enable, self.motor3_direction, self.position_4, 0]
+                self.data_list['stepspeed_1'] = 0
+                self.data_list['stepspeed_2'] = 0
+                self.data_list['stepspeed_3'] = 0
+                self.data_list['stepspeed_4'] = 0
 
             if "pump" and "normal_backward" in user_data:
                 element = user_data[1]*4-1
@@ -489,7 +536,14 @@ class serial_ui():
                     self.motor2_enable, self.motor2_direction, self.position_3, 0,
                     self.motor3_enable, self.motor3_direction, self.position_4, 0]
                 #only the according pump is set
+                self.data_list[f'position_{element}'] = -self.sw_endstop
                 data_list[element] = int(self.max_speed/2)
+                self.data_list['stepspeed_1'] = 0
+                self.data_list['stepspeed_2'] = 0
+                self.data_list['stepspeed_3'] = 0
+                self.data_list['stepspeed_4'] = 0
+                self.data_list[f'stepspeed_{element}'] = self.max_speed/2
+
 
             if "pump" and "fast_backward" in user_data:
                 element = user_data[1]*4-1
@@ -502,6 +556,14 @@ class serial_ui():
                     self.motor3_enable, self.motor3_direction, self.position_4, 0]
                 #only the according pump is set
                 data_list[element] = self.max_speed
+                self.data_list[f'position_{element}'] = -self.sw_endstop
+                data_list[element] = int(self.max_speed/2)
+                self.data_list['stepspeed_1'] = 0
+                self.data_list['stepspeed_2'] = 0
+                self.data_list['stepspeed_3'] = 0
+                self.data_list['stepspeed_4'] = 0
+                self.data_list[f'stepspeed_{element}'] = self.max_speed
+
 
             # dpg.add_button(label=">>", user_data={f"pump{element}": "fast_forward"}, callback=self.send_speed_to_arduino, tag=f"fast_forward_pump_{element}")
 
@@ -509,7 +571,9 @@ class serial_ui():
             logging.info(data_list)
         else:
             logging.info("unexpected data_list, nothing to send")
-        self.my_serial.send_to_arduino(data_list)
+        # self.my_serial.send_to_arduino(data_list)
+
+        self.my_serial.send_to_arduino(list(self.data_list.values()))
 
     # def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
     #     """
