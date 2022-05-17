@@ -26,22 +26,12 @@ class serial_ui():
     SERVER_THEME = None
 
     def __init__(self):
-        self.motor0_enable, self.motor1_enable, self.motor2_enable, self.motor3_enable = 0, 0, 0, 0 # enable on low = 0
-        self.motor0_direction, self.motor1_direction, self.motor2_direction, self.motor3_direction = 0, 0, 0, 0
-        self.position_1 = 100000
-        self.position_2 = 100000
-        self.position_3 = 100000
-        self.position_4 = 100000
-        self.stepspeed_1 = 0
-        self.stepspeed_2 = 0
-        self.stepspeed_3 = 0
-        self.stepspeed_4 = 0
-        # alternative list:
+        # dict for saving motor values:
         self.data_list = {"motor0_enable": 0, "motor0_direction": 0, "position_1": 100000, "stepspeed_1": 0, 
             "motor1_enable": 0, "motor1_direction": 0, "position_2": 100000, "stepspeed_2": 0, 
             "motor2_enable": 0, "motor2_direction": 0, "position_3": 100000, "stepspeed_3": 0,
             "motor3_enable": 0, "motor3_direction": 0, "position_4": 100000, "stepspeed_4": 0}
-
+        # additional values for motor control
         self.sw_endstop = 1100000
         self.max_speed = 15000
 
@@ -114,11 +104,6 @@ class serial_ui():
         stepspeed3 = calculate_stepspeed(float(dpg.get_value(self.channel_ratio_3))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_3)), float(dpg.get_value(self.channel_area_sqmm)))
         stepspeed4 = calculate_stepspeed(float(dpg.get_value(self.channel_ratio_4))*float(dpg.get_value(self.channel_m_per_s)), float(dpg.get_value(self.syringe_diameter_4)), float(dpg.get_value(self.channel_area_sqmm)))
         
-        self.stepspeed_1 =  int(round(stepspeed1))*dpg.get_value(self.nr_of_sorters)
-        self.stepspeed_2 =  int(round(stepspeed2))*dpg.get_value(self.nr_of_sorters)
-        self.stepspeed_3 =  int(round(stepspeed3))*dpg.get_value(self.nr_of_sorters)
-        self.stepspeed_4 =  int(round(stepspeed4))*dpg.get_value(self.nr_of_sorters)
-
         self.data_list['stepspeed_1'] = int(round(stepspeed1))*dpg.get_value(self.nr_of_sorters)
         self.data_list['stepspeed_2'] = int(round(stepspeed2))*dpg.get_value(self.nr_of_sorters)
         self.data_list['stepspeed_3'] = int(round(stepspeed3))*dpg.get_value(self.nr_of_sorters)
@@ -432,8 +417,7 @@ class serial_ui():
         dpg.stop_dearpygui()
 
     def send_speed_to_arduino(self, sender, app_data, user_data):
-        self.position_1, self.position_2, self.position_3, self.position_4 = self.sw_endstop, self.sw_endstop, self.sw_endstop, self.sw_endstop
-
+        # overwrite the last settings with the standard position to go
         self.data_list['position_1'] = self.sw_endstop
         self.data_list['position_2'] = self.sw_endstop
         self.data_list['position_3'] = self.sw_endstop
@@ -441,138 +425,63 @@ class serial_ui():
 
         if user_data is None:
             self.calculate_motors()
-
-            data_list = [self.motor0_enable, self.motor0_direction, self.position_1, self.stepspeed_1, 
-                self.motor1_enable, self.motor1_direction, self.position_2, self.stepspeed_2, 
-                self.motor2_enable, self.motor2_direction, self.position_3, self.stepspeed_3,
-                self.motor3_enable, self.motor3_direction, self.position_4, self.stepspeed_4]
         else:
             if "speed" in user_data:
                 dpg.set_value("channel_flow_speed", user_data["speed"])
                 self.calculate_motors()
-                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, self.stepspeed_1, 
-                    self.motor1_enable, self.motor1_direction, self.position_2, self.stepspeed_2, 
-                    self.motor2_enable, self.motor2_direction, self.position_3, self.stepspeed_3,
-                    self.motor3_enable, self.motor3_direction, self.position_4, self.stepspeed_4]
             if "go_to_endstops" in user_data and user_data["go_to_endstops"] == True:
-
-                self.position_1, self.position_2, self.position_3, self.position_4 = 0, 0, 0, 0
                 self.data_list['position_1'] = 0
                 self.data_list['position_2'] = 0
                 self.data_list['position_3'] = 0
                 self.data_list['position_4'] = 0
+                self.data_list['stepspeed_1'] = self.max_speed
+                self.data_list['stepspeed_2'] = self.max_speed
+                self.data_list['stepspeed_3'] = self.max_speed
+                self.data_list['stepspeed_4'] = self.max_speed
 
-                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, self.max_speed, 
-                    self.motor1_enable, self.motor1_direction, self.position_2, self.max_speed, 
-                    self.motor2_enable, self.motor2_direction, self.position_3, self.max_speed,
-                    self.motor3_enable, self.motor3_direction, self.position_4, self.max_speed]
             if "set_speed_zero" in user_data and user_data["set_speed_zero"] == True:
                 # disable on high, but not connected in hardware (?!)
-                # self.motor0_enable, self.motor1_enable, self.motor2_enable, self.motor3_enable = 1, 1, 1, 1
-                self.position_1, self.position_2, self.position_3, self.position_4 = 0, 0, 0, 0
-                self.data_list['position_1'] = 0
-                self.data_list['position_2'] = 0
-                self.data_list['position_3'] = 0
-                self.data_list['position_4'] = 0
-
-                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
-                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
-                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
-                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
-
-            # TODO: insert list
-            if "pump" and "fast_forward" in user_data:
-                element = user_data[1]*4-1
-                print(f"Moving pump {element} fast_forward")
-                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
-                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
-                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
-                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
-                #only the according pump is set
-                
-                data_list[element] = self.max_speed
-
+                # self.data_list['motor0_enable'] = 1
                 self.data_list['stepspeed_1'] = 0
                 self.data_list['stepspeed_2'] = 0
                 self.data_list['stepspeed_3'] = 0
                 self.data_list['stepspeed_4'] = 0
-                self.data_list[f'stepspeed_{element}'] = self.max_speed
 
+            if "pump" and "fast_forward" in user_data:
+                element = (user_data[1])
+                print(f"Moving pump {element} fast_forward")
+                #only the according pump is set
+                self.data_list[f'stepspeed_{element}'] = self.max_speed
 
             if "pump" and "normal_forward" in user_data:
-                element = user_data[1]*4-1
+                element = (user_data[1])
                 print(f"Moving pump {element} fast_forward")
-                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
-                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
-                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
-                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
                 #only the according pump is set
-                data_list[element] = int(self.max_speed/2)
-                self.data_list['stepspeed_1'] = 0
-                self.data_list['stepspeed_2'] = 0
-                self.data_list['stepspeed_3'] = 0
-                self.data_list['stepspeed_4'] = 0
-                self.data_list[f'stepspeed_{element}'] = self.max_speed/2
+                self.data_list[f'stepspeed_{element}'] = int(self.max_speed/2)
 
             if "pump" and "stop" in user_data:
-                print("stop")
-                print(user_data[1])
-                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
-                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
-                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
-                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
-                self.data_list['stepspeed_1'] = 0
-                self.data_list['stepspeed_2'] = 0
-                self.data_list['stepspeed_3'] = 0
-                self.data_list['stepspeed_4'] = 0
+                element = (user_data[1])
+                print(f"Stopping pump {element}")
+                self.data_list[f'stepspeed_{element}'] = 0
 
             if "pump" and "normal_backward" in user_data:
-                element = user_data[1]*4-1
+                element = (user_data[1])
                 print(f"Moving pump {element} fast_backward")
                 # position needs to be negative
-                self.position_1, self.position_2, self.position_3, self.position_4 = -self.sw_endstop, -self.sw_endstop, -self.sw_endstop, -self.sw_endstop
-                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
-                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
-                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
-                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
                 #only the according pump is set
                 self.data_list[f'position_{element}'] = -self.sw_endstop
-                data_list[element] = int(self.max_speed/2)
-                self.data_list['stepspeed_1'] = 0
-                self.data_list['stepspeed_2'] = 0
-                self.data_list['stepspeed_3'] = 0
-                self.data_list['stepspeed_4'] = 0
-                self.data_list[f'stepspeed_{element}'] = self.max_speed/2
-
+                self.data_list[f'stepspeed_{element}'] = int(self.max_speed/2)
 
             if "pump" and "fast_backward" in user_data:
-                element = user_data[1]*4-1
+                print(user_data)
+                element = (user_data[1])
                 print(f"Moving pump {element} fast_backward")
                 # position needs to be negative
-                self.position_1, self.position_2, self.position_3, self.position_4 = -self.sw_endstop, -self.sw_endstop, -self.sw_endstop, -self.sw_endstop
-                data_list = [self.motor0_enable, self.motor0_direction, self.position_1, 0, 
-                    self.motor1_enable, self.motor1_direction, self.position_2, 0, 
-                    self.motor2_enable, self.motor2_direction, self.position_3, 0,
-                    self.motor3_enable, self.motor3_direction, self.position_4, 0]
                 #only the according pump is set
-                data_list[element] = self.max_speed
                 self.data_list[f'position_{element}'] = -self.sw_endstop
-                data_list[element] = int(self.max_speed/2)
-                self.data_list['stepspeed_1'] = 0
-                self.data_list['stepspeed_2'] = 0
-                self.data_list['stepspeed_3'] = 0
-                self.data_list['stepspeed_4'] = 0
                 self.data_list[f'stepspeed_{element}'] = self.max_speed
 
-
-            # dpg.add_button(label=">>", user_data={f"pump{element}": "fast_forward"}, callback=self.send_speed_to_arduino, tag=f"fast_forward_pump_{element}")
-
-        if data_list:
-            logging.info(data_list)
-        else:
-            logging.info("unexpected data_list, nothing to send")
-        # self.my_serial.send_to_arduino(data_list)
-
+        # only send the values from the dictionary to the arduino
         self.my_serial.send_to_arduino(list(self.data_list.values()))
 
     # def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
