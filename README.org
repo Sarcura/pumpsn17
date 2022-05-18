@@ -458,7 +458,7 @@ to create an executable with pyinstaller just push a tag named like "v*", for in
 The github workflow will create distributables for Windows, MacOS and Linux.
 
   #+BEGIN_SRC git :exports code 
-  git tag v1.2.6
+  git tag v1.2.7
   git push origin --tags
   #+END_SRC
 
