@@ -81,6 +81,10 @@ def create_theme_imgui_light() -> Union[str, int]:
             dpg.add_theme_color(
                 dpg.mvThemeCol_ButtonActive, (0.06 * 255, 0.53 * 255, 0.98 * 255, 1.00 * 255)
             )
+
+            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 3)
+            dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 3, 3)
+
             dpg.add_theme_color(
                 dpg.mvThemeCol_Header, (0.26 * 255, 0.59 * 255, 0.98 * 255, 0.31 * 255)
             )

@@ -190,6 +190,7 @@ class serial_ui():
                     dpg.add_button(label="||", user_data=[f"pump", element, "stop"], callback=self.send_speed_to_arduino, tag=f"stop_pump_{element}")
                     dpg.add_button(label=">", user_data=[f"pump", element, "normal_forward"], callback=self.send_speed_to_arduino, tag=f"normal_forward_pump_{element}")
                     dpg.add_button(label=">>", user_data=[f"pump", element, "fast_forward"], callback=self.send_speed_to_arduino, tag=f"fast_forward_pump_{element}")
+                    dpg.add_loading_indicator(tag=f"setup_movement_indicator_{element}", radius = 2, speed=0)
 
     def create_send_speed(self):
         with dpg.group(horizontal=True):
@@ -322,16 +323,16 @@ class serial_ui():
                 # self.maximum_sorting_time Maximum amount of hours a full sorting is allowed to take
                 
                 with dpg.group(horizontal=True):
-                    with dpg.theme(tag="__demo_theme"):
+                    with dpg.theme(tag="sarcura_button_theme"):
                         with dpg.theme_component(dpg.mvButton):
                             dpg.add_theme_color(dpg.mvThemeCol_Button, (224, 36, 36))
                             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (224, 36, 36))
                             dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (204, 46, 46))
-                            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 5)
+                            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 3)
                             dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 3, 3)
 
                     dpg.add_button(label="Calculate Sorting", callback=self.calculate_sorting, tag="calculate_sorting")
-                    dpg.bind_item_theme(dpg.last_item(), "__demo_theme")
+                    dpg.bind_item_theme(dpg.last_item(), "sarcura_button_theme")
 
         dpg.add_checkbox(label="Calculate medium and sorting time for selected sorting speed per sorter.", tag="medium_calculation")
         dpg.add_separator()
@@ -495,7 +496,8 @@ class serial_ui():
         self.data_list['position_2'] = self.sw_endstop
         self.data_list['position_3'] = self.sw_endstop
         self.data_list['position_4'] = self.sw_endstop
-        
+        dpg.configure_item(item="pumping_indicator", speed=dpg.get_value(self.channel_m_per_s))
+
         if user_data is None:
             self.calculate_motors()
         else:
@@ -521,6 +523,10 @@ class serial_ui():
                 self.data_list['stepspeed_4'] = 0
                 dpg.configure_item(item="pumping_indicator", speed=0)
 
+            if "pump" and not "stop" in user_data:
+                element = (user_data[1])
+                dpg.configure_item(item=f"setup_movement_indicator_{element}", speed=1)
+
             if "pump" and "fast_forward" in user_data:
                 element = (user_data[1])
                 print(f"Moving pump {element} fast_forward")
@@ -537,6 +543,7 @@ class serial_ui():
                 element = (user_data[1])
                 print(f"Stopping pump {element}")
                 self.data_list[f'stepspeed_{element}'] = 0
+                dpg.configure_item(item=f"setup_movement_indicator_{element}", speed=0)
 
             if "pump" and "normal_backward" in user_data:
                 element = (user_data[1])
@@ -557,7 +564,6 @@ class serial_ui():
 
         # only send the values from the dictionary to the arduino
         self.my_serial.send_to_arduino(list(self.data_list.values()))
-        dpg.configure_item(item="pumping_indicator", speed=dpg.get_value(self.channel_m_per_s))
 
     # def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
     #     """
@@ -592,10 +598,3 @@ class serial_ui():
 
 if __name__ == "__main__":
     gui = serial_ui()
-    # import git
-    # repo = git.Repo(search_parent_directories=True)
-    # sha = repo.head.object.hexsha
-    # x = repo.head.object
-    # print(repo)
-    # print(sha)
-    # print(x)
