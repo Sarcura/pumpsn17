@@ -263,6 +263,7 @@ class serial_ui():
                 callback=self.send_speed_to_arduino, parent=send_group)
             dpg.add_button(tag="sendStop", user_data={"set_speed_zero" : True}, label="Stop Pumps",
                 callback=self.send_speed_to_arduino, parent=send_group)
+            dpg.add_loading_indicator(tag="pumping_indicator", speed=0)
 
         dpg.add_separator()
 
@@ -275,7 +276,7 @@ class serial_ui():
             dpg.add_input_int(label="Set interval time [s]", tag="interval",default_value=1, width=180)
             dpg.add_button(label="Start Automation", callback=self.automate_pumps, user_data=True, tag="start_auto")
             dpg.add_button(label="Stop Automation", callback=self.automate_pumps, user_data=False, tag="stop_auto")
-
+            dpg.add_loading_indicator(tag="automated_indicator", speed=0)
 
     def create_calculate(self):
         with dpg.group(horizontal=True):
@@ -380,6 +381,8 @@ class serial_ui():
                             dpg.add_listbox(self.portList, tag="__listPortsTag",
                                 width=300, num_items=2,
                                 callback=self.selected_port_callback)
+                    dpg.add_loading_indicator(tag="connected_indicator", speed=0)
+
                 with dpg.tab(label="Setup"):
                     self.create_setup()
 
@@ -410,6 +413,11 @@ class serial_ui():
         # logging.info(type(self.SELECTED_DEVICE))
         self.my_serial.port = self.SELECTED_DEVICE
         self.my_serial.connect()
+        if self.my_serial.link:
+            dpg.configure_item(item="connected_indicator", speed=dpg.get_value(self.channel_m_per_s))
+        else:
+            dpg.configure_item(item="connected_indicator", speed=0)
+
         logging.info(f"User selected: {self.SELECTED_DEVICE}")
 
     def dpg_show_view_port(self):
@@ -462,9 +470,13 @@ class serial_ui():
         if "start_auto" in user_data:
             print("On")
             self.toggle_loop()
+            dpg.configure_item(item="automated_indicator", speed=dpg.get_value(self.channel_m_per_s))
+
         else:
             print("Off")
             t.cancel()
+            dpg.configure_item(item="automated_indicator", speed=0)
+
 
     def calculate_cannel_ratios(self):
         channel_value_1 = dpg.get_value(item="flow_speed_pump_1")
@@ -483,7 +495,7 @@ class serial_ui():
         self.data_list['position_2'] = self.sw_endstop
         self.data_list['position_3'] = self.sw_endstop
         self.data_list['position_4'] = self.sw_endstop
-
+        
         if user_data is None:
             self.calculate_motors()
         else:
@@ -507,6 +519,7 @@ class serial_ui():
                 self.data_list['stepspeed_2'] = 0
                 self.data_list['stepspeed_3'] = 0
                 self.data_list['stepspeed_4'] = 0
+                dpg.configure_item(item="pumping_indicator", speed=0)
 
             if "pump" and "fast_forward" in user_data:
                 element = (user_data[1])
@@ -544,6 +557,7 @@ class serial_ui():
 
         # only send the values from the dictionary to the arduino
         self.my_serial.send_to_arduino(list(self.data_list.values()))
+        dpg.configure_item(item="pumping_indicator", speed=dpg.get_value(self.channel_m_per_s))
 
     # def send_msg_to_serial_port_callback(self, sender, app_data, user_data) -> None:
     #     """
