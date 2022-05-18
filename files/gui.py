@@ -10,6 +10,7 @@ import dearpygui.dearpygui as dpg
 from themes import create_theme_imgui_light, create_theme_client, create_theme_server
 from arduino import Arduino
 from flowspeed_motorspeed import calculate_stepspeed, calculate_sorting_parameters
+import threading
 import yaml
 import logging
 import datetime
@@ -266,12 +267,14 @@ class serial_ui():
         dpg.add_separator()
 
     def create_automate(self):
-        pass
         with dpg.group():
-            dpg.add_checkbox(label="Automate Pump 1.", tag="automate_1")
-            dpg.add_checkbox(label="Automate Pump 2.", tag="automate_2")
-            dpg.add_checkbox(label="Automate Pump 3.", tag="automate_3")
-            dpg.add_checkbox(label="Automate Pump 4.", tag="automate_4")
+            dpg.add_checkbox(label="Automate Pump 1", tag="automate_1")
+            dpg.add_checkbox(label="Automate Pump 2", tag="automate_2")
+            dpg.add_checkbox(label="Automate Pump 3", tag="automate_3")
+            dpg.add_checkbox(label="Automate Pump 4", tag="automate_4")
+            dpg.add_input_int(label="Set interval time [s]", tag="interval",default_value=1, width=180)
+            dpg.add_button(label="Start Automation", callback=self.automate_pumps, user_data=True, tag="start_auto")
+            dpg.add_button(label="Stop Automation", callback=self.automate_pumps, user_data=False, tag="stop_auto")
 
 
     def create_calculate(self):
@@ -383,6 +386,9 @@ class serial_ui():
                 with dpg.tab(label="Pumps"):
                     self.create_send_speed()
 
+                with dpg.tab(label="Automate"):
+                    self.create_automate()
+
                 with dpg.tab(label="Simulations"):
                     self.create_calculate()
                     # self.create_msg_and_filter_columns()
@@ -418,6 +424,47 @@ class serial_ui():
 
     def exit_callback(self):
         dpg.stop_dearpygui()
+################################### functions ################################
+
+    def toggle(self):
+        self.x = not self.x
+        # toggle the speed of pump to 0
+
+    def toggle_loop(self):
+        global t
+        self.toggle()
+        self.data_list_toggle = self.data_list.copy()
+
+        if dpg.get_value(item="automate_1"):
+            print("pump1")
+            self.data_list_toggle['stepspeed_1'] = 0
+        if dpg.get_value(item="automate_2"):
+            print("pump2")
+            self.data_list_toggle['stepspeed_2'] = 0
+        if dpg.get_value(item="automate_3"):
+            print("pump3")
+            self.data_list_toggle['stepspeed_3'] = 0
+        if dpg.get_value(item="automate_4"):
+            print("pump4")
+            self.data_list_toggle['stepspeed_4'] = 0
+
+        if self.x is True:
+            self.my_serial.send_to_arduino(list(self.data_list_toggle.values()))
+        else:
+            self.my_serial.send_to_arduino(list(self.data_list.values()))
+
+        t = threading.Timer(dpg.get_value(item="interval"), self.toggle_loop)
+        t.start()
+
+    def automate_pumps(self, user_data):
+        self.x = True
+        print(user_data)
+        if "start_auto" in user_data:
+            print("On")
+            self.toggle_loop()
+        else:
+            print("Off")
+            t.cancel()
 
     def calculate_cannel_ratios(self):
         channel_value_1 = dpg.get_value(item="flow_speed_pump_1")
