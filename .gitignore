@@ -1,6 +1,7 @@
 *.pyc
-*.yaml
+*settings.yaml
 *demo*
 */build
 *.spec
 *.log
+*/__pycache__
