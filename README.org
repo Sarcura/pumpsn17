@@ -3,6 +3,17 @@
 
 *This page describes how to build simple but high quality syringe pumps for microfluidics applications.*
 
+This is a [[https://DropletKitchen.github.io][DropletKitchen]] project. Original source code of the project
+is provided under MIT License. The source may contain code under a
+different license, if this is the case it is stated in the LICENSE
+file.
+
+If not stated otherwise, the designs and documentation in this repository
+is Copyright (c) 2016 Martin Fischlechner and DropletKitchen Contributors,
+and made available under a
+[[https://creativecommons.org/licenses/by/4.0/][Creative Commons Attribution 4.0 International (CC BY 4.0)]] License.
+
+
 #+CAPTION: Image of the 3D-printed version of the pump.
 [[images/3DprintedPump.jpeg]]
 #+BEGIN_QUOTE
@@ -27,7 +38,8 @@ Screws and nuts for optics assemblies are employed, which, in
 conjunction with microstepping the motor, result in stable flow even
 at very low flowrates. The pump uses it's structural components as
 endstops, and the user controls the system via a software frontend
-based on Python, at a small fraction of the cost of a commercial pump.
+based on Python, at a small
+fraction of the cost of a commercial pump.
 
 ** Mechanics - Files and Bill of Materials   
 
@@ -266,7 +278,7 @@ openSCAD model, render and export.
 #+BEGIN_QUOTE
 Two modified 3D-printed pumps with smaller, lower power Nema14 motors
 used in a microfluidic experiment. The electronics in the image is
-based on a 'Quadstepper board' but can be supplemented with 4 "big easy driver" boards.
+based on a 'Quadstepper board' (unfortunately no longer available).
 #+END_QUOTE
 
 
@@ -353,10 +365,8 @@ from controlling machinery, the teensy is well suited for data
 acquisition tasks.
 
 The GUI is written with the dearpygui library, and connects user input with calculated output and the usb device via pySerial.
-The repository is structured after this guideline:
-https://docs.python-guide.org/writing/structure/
 
-The communication protocol between the microcontroller and python is pySerial. It is a very
+The communication protocol between the microcontroller and PD is pySerial. It is a very
 flexible, easy to use two-way communication.
 
 #+CAPTION: System diagram.
@@ -402,30 +412,7 @@ Screenshot of the program.
 #+BEGIN_QUOTE
 Screenshot of the program.
 #+END_QUOTE
-[[images/Software3.png]]
-#+BEGIN_QUOTE
-Screenshot of the program.
-#+END_QUOTE
-[[images/Software4.png]]
-#+BEGIN_QUOTE
-Screenshot of the program.
-#+END_QUOTE
-[[images/Software5.png]]
-#+BEGIN_QUOTE
-Screenshot of the program.
-#+END_QUOTE
-[[images/Software6.png]]
-#+BEGIN_QUOTE
-Screenshot of the program.
-#+END_QUOTE
-[[images/Software7.png]]
-#+BEGIN_QUOTE
-Screenshot of the program.
-#+END_QUOTE
-[[images/Software6.png]]
-#+BEGIN_QUOTE
-Screenshot of the program.
-#+END_QUOTE
+
 - upload the corresponding file to the microcontroller
   ([[./files/Flexible3or4Pumps.ino]]).
 

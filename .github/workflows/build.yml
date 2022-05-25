@@ -40,22 +40,21 @@ jobs:
           - os: macos-latest
             TARGET: macos
             CMD_BUILD: >
-                pyinstaller -F -w -n "syringepumps_macos_${{github.ref_name}}" -i assets/sarcura.icns sarcura-control/gui.py &&
+                pyinstaller -F -w -n "syringepumps_macos_${{github.ref_name}}" -i files/sarcura.icns files/gui.py &&
                 cd dist/ &&
                 zip -r9 syringepumps_macos syringepumps_macos_${{github.ref_name}}.app/
             OUT_FILE_NAME: syringepumps_macos.zip
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: pyinstaller -F -w -n syringepumps_${{github.ref_name}} -i assets/sarcura.ico sarcura-control/gui.py
+            CMD_BUILD: pyinstaller -F -w -n syringepumps_${{github.ref_name}} -i files/sarcura.ico files/gui.py
             OUT_FILE_NAME: syringepumps_${{github.ref_name}}.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
           - os: ubuntu-latest
             TARGET: ubuntu
-            CMD_BUILD: pyinstaller -F -w -n syringepumps_linux_${{github.ref_name}} sarcura-control/gui.py
+            CMD_BUILD: pyinstaller -F -w -n syringepumps_linux_${{github.ref_name}} files/gui.py
             OUT_FILE_NAME: syringepumps_linux_${{github.ref_name}}
-            ASSET_MIME: application
-            # ASSET_MIME: application/x-executable
+            ASSET_MIME: application/x-executable
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python "3.10"
